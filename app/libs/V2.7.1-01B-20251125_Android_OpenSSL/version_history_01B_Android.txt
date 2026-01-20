@@ -1,0 +1,475 @@
+V2.6.5-01B-20250527_Android
+NUI:
+分支: release/2.6.x/baseline
+commit id: 4b6e3e2d6e163b52f9f1fc8d7adffe98393b9049
+说明:
+  1. 修复离线功能在线功能同时使用时，sts_token覆盖token导致在线功能无法使用的问题
+  2. 日志系统错误切割中文导致JNI UTF8崩溃
+  3. 流式语音合成增加长文本语音合成即单向流式大模型语音合成功能
+SE(submodule):
+分支: CEI_V2.3.x_Fix
+commit id: 55d88b7c81f28fb10720983b3840f6ee673d1798
+说明:
+  1. 
+NuiDemoForUnit:
+分支: develop/V2.6.x/baseline
+commit id: 1d9da80619fa0255977e80651d92c2e8e81e33fe
+说明:
+  1. 流式大模型语音合成增加单句合成(支持SSML)的示例
+
+V2.6.4-01B-20250410_Android
+NUI:
+分支: release/2.6.x/baseline
+commit id: 7427b38b4fd9723b267c7e5ba767405e7fbe646e
+说明:
+  1. 减少识别时调用stop接口返回最终识别结果的延迟
+  2. 纯云端功能支持不传入workspace
+  3. 一句话识别增加链接超时相关参数设置;一句话识别新增EVENT_ASR_STARTED事件, 用于返回RecognitionStarted事件及task_id  4. 日志系统增加行号显示
+  5. 修复一句话识别返回2个EVENT_VAD_END的问题;修复一句话识别不返回错误信息和完整response的问题;
+  6. 修复录音文件极速版初始化失败时调用start崩溃的问题
+  7. 修复唤醒029在初始化时鉴权2次的问题; 纯离线功能时跳过token刷新功能
+  8. 允许非离线语音合成的SDK_CODE使用离线语音合成功能。但是不允许标准版离线语音合成使用精品版离线语音合成的发音人包
+  9. 录音文件识别极速版增加音频文件链接识别的功能
+  10.实时识别新增EVENT_TRANSCRIBER_STARTED事件, 用于返回TranscriptionStarted事件及task_id
+  11.修复离线TTS的SpeedRate&PitchRate&Volume设置无效的问题;修复离线TTS设置pitch_level后合成音频异常的问题;修复离线TTS设置错误extend_font_name会崩溃的问题
+  12.新增开关参数stash_partial_result。在实时识别和听悟实时推流时说长句子时，SDK内部会将返回SentenceEnd的json repsone中的stash_result(暂存的中间结果)覆盖payload.result，并以EVENT_ASR_PARTIAL_RESULT事件返回。新增参数将可开关这个功能
+  13.修复语音合成某些情况下get_param("error_msg")获得空结果的问题。
+  14.语音合成增加dns_timeout设置参数
+  15.日志系统增加设置控制日志文件大小的功能
+  16.流式语音合成增加cancel()和async_stop()接口
+  17.修复SDK使用新版本鉴权后退回到旧SDK使用旧版本鉴权启动会有json::LogicError-asCString崩溃的问题
+  18.增加日志信息回送的方式, 可通过此回调将SDK运行日志送到用户层
+  19.修复SSL获得数据时偶现TRY_AGAIN上报错误的问题
+  20.修复iOS平台使用时, 当获得的sockFd大于1024(FD_SETSIZE)时, connect()建连会失败, 上报EINPROGRESS错误和Invalid argument错误信息。
+
+SE(submodule):
+分支: CEI_V2.3.x_Fix
+commit id: 55d88b7c81f28fb10720983b3840f6ee673d1798
+说明:
+  1. 修复离线TTS的SpeedRate&PitchRate&Volume设置范围, 增加PitchRate设置接口
+
+NuiDemoForUnit:
+分支: develop/V2.6.x/baseline
+commit id: abed64cb2628c84c65f57f2195d8417b4428f922
+说明:
+  1. Android/iOS 增加运行过程中刷新token的示例
+  2. Android/iOS 纯云端功能可不传入workspace
+  3. Android/iOS 一句话识别和实时识别增加启动事件EVENT_ASR_STARTED和EVENT_TRANSCRIBER_STARTED, 主要用于获得TaskId
+  4. Android 去掉不必要的权限android.permission.WRITE_EXTERNAL_STORAGE和android.permission.READ_EXTERNAL_STORAGE
+  5. Android 离线语音合成示例增加发音人语音包选择下载的功能，增加SpeedRate和PitchRate和Volume设置，方便演示
+  6. Android 语音合成示例增加SpeedRate和PitchRate和Volume设置，增加音频保存的示例，增加dns_timeout参数设置
+  7. Android 录音文件转写增加参数设置, 包括添加一些演示音频
+  8. Android 听悟实时推流demo新增关闭stash_partial_result的示例
+  9. Android/iOS 流式语音合成增加async_stop和cancel接口
+  10.Android 用于存储调试信息的debug_path调整到debug目录下。同时增加本地存储日志文件的最大字节数的设置。
+  11.Android 新增在线和离线语音合成混合使用的示例工程
+  12.Android 删除不用的文件app_top_layout.xml wakeup.ogg DateUtil.java FileUtil.java INativeSpeechRecognizerCallback.java INativeSpeechTranscriberCallback.java NuiSpeechRecognizer.java NuiSpeechTranscriber.java
+  13.iOS 去掉一些涉及权限信息的不必要操作
+  14.iOS 识别的调用接口改为同步，解决多实例运行可能崩溃的问题
+
+
+V2.6.4-01B-20241224_Android
+NUI:
+分支: develop/2.6.4/baseline
+commit id: 7d7bddd68a337581c68fa643894a5e90c905a070
+说明:
+  1. 新增开关参数stash_partial_result。在实时识别和听悟实时推流时说长句子时，SDK内部会将返回SentenceEnd的json repsone中的stash_result(暂存的中间结果)覆盖payload.result，并以EVENT_ASR_PARTIAL_RESULT事件返回。新增参数将可开关这个功>能
+
+SE(submodule):
+分支: CEI_V2.3.x_Fix
+commit id: d2cb1d2245b2497fffb87f09b700b0468af61969
+说明:
+  1.
+
+NuiDemoForUnit:
+分支: develop/V2.6.x/baseline
+commit id: 0c5328b273ca150748a18978b7fc3d3feba08649
+说明:
+  1. 听悟实时推流demo新增关闭stash_partial_result的示例
+
+
+V2.6.3-01B-20241219_Android
+NUI:
+分支: develop/2.6.3/baseline
+commit id: 65097ea96579064487f2f51c9fefb7151858909d
+说明:
+  1. 修复一句话识别返回2个EVENT_VAD_END的问题
+  2. 修复一句话识别不返回错误信息和完整response的问题
+  3. 修复录音文件极速版初始化失败时调用start崩溃的问题
+  4. 修复唤醒029在初始化时鉴权2次的问题; 纯离线功能时跳过token刷新功能
+  5. 允许非离线语音合成的SDK_CODE使用离线语音合成功能。但是不允许标准版离线语音合成使用精品版离线语音合成的发音人包
+  6. 录音文件识别极速版增加音频文件链接识别的功能
+  7. 修复不传入workspace无法使用8K语音识别的问题
+  8. 实时识别新增EVENT_TRANSCRIBER_STARTED事件, 用于返回TranscriptionStarted事件及task_id
+  9. 一句话识别新增EVENT_ASR_STARTED事件, 用于返回RecognitionStarted事件及task_id
+  10.修复离线TTS的SpeedRate&PitchRate&Volume设置无效的问题
+  11.修复离线TTS设置错误extend_font_name会崩溃的问题
+
+SE(submodule):
+分支: CEI_V2.3.x_Fix
+commit id: d2cb1d2245b2497fffb87f09b700b0468af61969
+说明:
+  1. 修复离线TTS的SpeedRate&PitchRate&Volume设置范围, 增加PitchRate设置接口
+
+NuiDemoForUnit:
+分支: develop/V2.6.x/baseline
+commit id: 7f57ed93ffa37e20d0993c5abddaa161e9f56e20
+说明:
+  1. iOS 增加运行过程中刷新token的示例
+  2. iOS 增加识别结果的展示
+  3. iOS device_id和workspace可不设置的说明
+  4. iOS 去掉一些涉及权限信息的操作
+  5. Android 移除android.permission.WRITE_EXTERNAL_STORAGE和android.permission.READ_EXTERNAL_STORAGE
+  6. Android 离线TTS demo增加发音人文件下载, 方便演示
+  7. Android TTS中增加语速语调音量发音人和音频编码的设置, 增加音频保存
+  8. Android 一句话识别和实时识别增加启动事件EVENT_ASR_STARTED和EVENT_TRANSCRIBER_STARTED, 主要用于获得TaskId
+  9. Android 录音文件转写增加参数设置, 包括添加一些演示音频
+
+
+V2.6.2-01B-20241114_Android
+NUI:
+分支: develop/2.6.1/baseline
+commit id: 3562849d69c16b019729b6be7ad45411d34313eb
+说明:
+  1. 一句话识别增加链接超时相关参数设置
+  2. 纯云端功能支持不传入workspace
+  3. 调整stop指令顺序以降低识别结果返回的延迟, 约节约80ms
+
+SE(submodule):
+分支: CEI_V2.3.x_Fix
+commit id: f0f53685ddb279e828a1d8966f2afc72abbfb737
+说明:
+
+NuiDemoForUnit:
+分支: develop/V2.6.x/baseline
+commit id: 219ceb9f3070a3da260860984938ac1b1efb7933
+说明:
+  1. 增加运行过程中刷新token的示例
+  2. 纯云端功能可不传入workspace
+
+V2.6.1-01B-20240819_Android
+NUI:
+分支: develop/2.6.1/baseline
+commit id: d8fdd63dd30b764651d02dac1b356adb051d0363
+说明:
+  1. 解决Android部分机器使用录音文件转写功能崩溃的问题
+  2. 解决录音文件转写送入的音频文件不可用而崩溃的问题
+
+SE(submodule):
+分支: CEI_V2.3.x_Fix
+commit id: acca4c2bad4a683aca444639fc16c55c01134dea
+说明:
+
+NuiDemoForUnit:
+分支: develop/V2.6.x/baseline
+commit id: 977684094ef72b36ca48aa57e66a41e4c794fb32
+说明:
+
+V2.6.0-01B-20240627_Android
+NUI:
+分支: develop/2.6.0/baseline
+commit id: 3fd4f2b70939cb5045304511ac85f2b4f894615c
+说明:
+  1. OpenSSL增加加密套件协议，支持绝大多数服务端握手
+  2. SDK打包中增加头文件，可配合动态库进行cpp层面的调用开发
+  3. 流式TTS中参数设置不再仅支持字符串格式，支持格式可见官网文档
+  4. 解决OpenSSL无法成功与某些私有云服务器握手链接的问题
+
+SE(submodule):
+分支: CEI_V2.3.x_Fix
+commit id: acca4c2bad4a683aca444639fc16c55c01134dea
+说明:
+  1. 唤醒相关更新
+
+NuiDemoForUnit:
+分支: develop/V2.6.x/baseline
+commit id: e3dfbec03d8ab510ba97fe39e83dd55258080d8d
+说明:
+  1. 更新iOS示例工程中录音播放相关代码，原旧版本录音播放相关代码继续保留
+  2. iOS/Android中鉴权相关代码重构，支持SecurityToken的鉴权示例
+  3. Android中增加万能参数设置的示例
+  4. iOS/Android示例工程增加TTS播放音量计算的示例代码
+  5. 增加Android Cpp 接口文档
+
+
+V2.6.0-01B-20240606_Android
+NUI:
+分支: develop/2.6.0/baseline
+commit id: 008ed31730ad2305167a437fa533d154802f5d71
+说明:
+  1. 增加流式输入TTS
+  2. 增加单独唤醒的功能(仅029版本支持, 028/01B不支持)
+  3. Android增加带符号表的备份动态库libneonui_with_symbols，用于崩溃时定位问题
+  4. 增加听悟实时记录功能
+  5. 回调返回完整信息
+  6. 改为OpenSSL作为底层网络库(仅01B支持)
+
+SE(submodule):
+分支: CEI_V2.3.x_Fix
+commit id: c79e183de4989d2aa481dc2775e4edbdccc07034
+说明:
+  1. 修复本地vad模块内存泄露问题(仅029版本支持, 028/01B不支持)
+  2. 本地唤醒模块升级(仅028/029版本支持, 01B不支持)
+
+NuiDemoForUnit:
+分支: develop/V2.6.x/baseline
+commit id: e85c00f0e3842b06955df02ad6c156c58312e9ba
+说明:
+  1. 增加流式输入TTS范例工程
+  2. 更新录音文件转写极速版范例工程
+  3. 增加单唤醒功能范例工程(仅029版本支持, 028/01B不支持)
+  4. 增加听悟实时记录范例工程
+
+
+V2.5.14-01B-20231103_Android
+NUI:
+分支: develop/2.5.15/baseline
+commit id: 63803ac3bb823fdc5bd0bbb58b799d0bf35a2939
+说明:
+  1. 解决AuthV3查看linux_version时fgets栈溢出的问题。
+  2. 修复长文本语音合成文本超16K字节无法合成的问题。
+  3. 修复android_api < 24 找不到fseeko64的问题。
+  4. 在kws.bin vad.bin加载处增加try-catch包裹, 防止崩溃。
+  5. RelWithDebugInfo 有符号表, 可用这个成果物进行调试
+  6. 在线TTS增加用户自定义参数设置接口的示例, 可以设置文档中不存在的参数
+
+SE(submodule):
+分支: CEI_V2.3.x_Fix
+commit id: 2f8456e7df5cec0c667b95723fe812df9f13d753
+说明:
+  1. 在kws.bin vad.bin加载处增加try-catch包裹, 防止崩溃。
+  2. 增加对资源文件tts/languagedata_embedded.bin完整性校验，仍然支持老的languagedata_embedded.bin
+  3. 打印信息中打印md5，用于当kws资源文件异常时排查
+
+NuiDemoForUnit:
+分支: develop/V2.5.15/baseline
+commit id: da154b5c6ad9e7244dae7f332f3cf2c28b480353
+说明:
+  1. tts demo增加音频保存的示例
+  2. 增加防混
+  3. iOS工程解决播放时pause再resume偶现无法播放的问题
+  4. 在线TTS增加用户自定义参数设置接口的示例, 可以设置文档中不存在的参数
+  5. Android工程增加语音合成音频保存到文件的示例
+  6. iOS工程修复view退出未调用nui_release的问题
+  7. 增加start()接口传入参数的示例
+  8. Android targetSdkVersion提升到33
+
+resources:
+  见当前目录中resources
+
+Note:
+  此SDK为纯在线功能SDK，不包含任何离线功能
+
+
+V2.5.14-01B-20230725_Android
+NUI:
+分支: develop/2.5.15/baseline
+commit id: 2273440efac799361b29dfee5ee3706e54ceeff6
+说明:
+  1. 替换新的鉴权方案，兼容旧鉴权方案，隐私政策请详见《隐私政策.txt》
+  2. 升级zlib 1.2.11到1.2.13，修复zlib的漏洞编号MPS-2022-53300
+  3. 修复不设置debug_path，且workspace只读的情况下报错误码240022的问题。
+  4. 修复sts_token设置无效的问题
+
+SE(submodule):
+分支: CEI_V2.3.x_Fix
+commit id: f5f0039f2f3a09d69445dd7530bb7c42511250da
+说明:
+  1. 增加代码保护，以解决离线TTS偶现的Tacotron::Tacotron(PhoneSet*) 崩溃问题。
+
+NuiDemoForUnit:
+分支: develop/V2.5.15/baseline
+commit id: ed1b51b0ca4683442552f6387bc62ef7a9fbea76
+说明:
+  1. Android nuisdk工程中资源文件的copylist.txt改名ali_copylist.txt，解决和其他aar中同名copylist.txt冲突的问题。老资源列表copylist.txt仍然可用。
+  2. iOS&Android nuisdk工程增加获取手机硬件信息的功能，用于离线TTS新鉴权方案。替换新的鉴权方案，只获得符合安全和隐私规范的硬件信息。
+  3. iOS&Android demo工程更新阿里云账号范例，强烈推荐使用sts安全方式获得账号。
+  4. iOS&Android demo工程获得用户权限进行收敛，仅需要录音/播放权限、磁盘存储权限。
+  5. iOS&Android demo工程修复一句话识别示例中VAD/P2T模式设置的说明。
+  6. iOS&Android demo工程修复极速文件转写功能启动会进行鉴权的问题。
+
+resources:
+  见当前目录中resources
+
+Note:
+  此SDK为纯在线功能SDK，不包含任何离线功能
+
+
+V2.5.14-01B-20230419_Android
+NUI:
+分支: develop/2.5.14-01B/unit_merge_taobaozhibo
+commit id: caa17ece948a25448b851b2db29536bfcce49c3a
+说明:
+  1. 支持英文唤醒词
+
+SE(submodule):
+分支: CEI_V2.3.x_Fix
+commit id: 446281f4517651d2dbfa84cc05e14f401ebda6b3
+说明:
+  1. 支持英文唤醒词
+
+NuiDemoForUnit:
+分支: release/V2.5.14-01B/unit_merge_taobaozhi
+commit id: b06aaf2ef0f22cd29f2891d56e4119d84e89a4a1
+说明:
+
+resources:
+  见当前目录中resources
+
+Note:
+
+
+V2.5.14-01B-20230331
+NUI:
+分支: develop/2.5.14-01B/unit_merge_taobaozhibo
+commit id: fb5c6c45984d7875aff52c9268418be5c32c9262
+说明:
+  1. MBEDTLS_SSL_VERIFY_REQUIRED 改成 MBEDTLS_SSL_VERIFY_NONE
+
+SE(submodule):
+分支: CEI_V2.3.x_Fix
+commit id: 1ee0641a3abc60039bf57041fd90b95f7bff8c31
+说明:
+  1.
+
+NuiDemoForUnit:
+分支: release/V2.5.14-01B/unit_merge_taobaozhi
+commit id: b4f3836c253b9d6525c8d1981e9a479c29d4ead9
+说明:
+  1. iOS demo工程的NLSRingBuf增加动态扩大机制，防止超长文本语音合成数据阻塞的问题
+
+resources:
+  见当前目录中resources
+
+Note:
+
+
+V2.5.14-01B-20230104
+NUI:
+分支: develop/2.5.14-01B/unit_merge_taobaozhibo
+commit id: e7acbc6d8ee6fe62853f1e8d777d02cdddf08f56
+说明:
+  1. 
+
+SE(submodule):
+分支: CEI_V2.3.x_Fix
+commit id: a736171ecd5f13f64d7501a2a3d5449b4b60da4b
+说明:
+  1. 
+
+NuiDemoForUnit:
+分支: release/V2.5.14-01B/unit_merge_taobaozhi
+commit id: 657b7389f0e9920578707858003f1bc960b6f962
+说明:
+  1. 解决反复new AudioTrack导致的崩溃问题
+
+resources:
+  见当前目录中resources
+
+Note:
+
+
+V2.5.14-01B-20221229
+NUI:
+分支: develop/2.5.14-01B/unit_merge_taobaozhibo
+commit id: 58e6d066772077f487f45012ca1c2ac73c9e40b0
+说明:
+  1. 修复设置动态唤醒词空时崩溃的问题
+  2. 增加鉴权时可设置url功能
+  3. 修复鉴权问题: id0已经鉴权，改成id1时产生的license，与全新id1产生的license不同的问题
+  4. 增加长文本语音合成功能
+  5. 鉴权增加SecurityToken支持
+
+SE(submodule):
+分支: CEI_V2.3.x_Fix
+commit id: a736171ecd5f13f64d7501a2a3d5449b4b60da4b
+说明:
+  1. 修复唤醒词设定空时崩溃的问题 
+  2. 删除不用的LOGE
+
+NuiDemoForUnit:
+分支: release/V2.5.14-01B/unit_merge_taobaozhi
+commit id: 9ec25aa1d25f61d11e8616494bae9d85fb60398b
+说明:
+  1. 增加一些关于sts的错误说明
+  2. 增加NativeNui调用的保护
+  3. 增加长文本语音合成功能
+  4. 增加一些说明
+
+resources:
+  见当前目录中resources
+
+Note:
+
+
+V2.5.14-01B-20221107
+NUI:
+分支: develop/2.5.14-01B/unit_merge_taobaozhibo
+commit id: 28950edab8ec3a3d0579a1aab05b752bb95b05ef
+说明: 1. 修复NUI中speech_rate和speed_level换算错误的问题
+
+SE(submodule):
+分支: CEI_V2.3.x_Fix
+commit id: f0123edf3320532c5a1b1f0abd72e70f3eac5425
+说明: 1. 删除不用的LOGE
+
+NuiDemoForUnit:
+分支: release/V2.5.14-01B/unit_merge_taobaozhi
+commit id: c47d8dec151e5a01f7c4e03054b807c5ead18c9c
+说明:
+  1. 增加TTS设置发音人采样率后设置播放器采样率的示例
+
+resources:
+  见当前目录中resources
+
+Note:
+
+
+V2.5.14-01B-20221013
+NUI:
+分支: develop/2.5.14-01B/unit_merge_taobaozhibo
+commit id: 0dc29dc5c078527f2182481c2005b79530f10a2a
+说明: 1. 增加新鉴权方案 2. 日志去掉ak_id等敏感信息 3. 增加tts字数计算功能
+
+SE(submodule):
+分支: CEI_V2.3.x_Fix
+commit id: ad75ebf5f695d05b11fe365bedb6323ab449db04
+说明: 修复bug, 为local tts增加log
+
+NuiDemoForUnit:
+分支: release/V2.5.14-01B/unit_merge_taobaozhi
+commit id: b4ee1ff9027ea6d29b21177334c26eb879031d9c
+说明:
+  1. 修复实时转写无法启动的问题
+
+resources:
+  见当前目录中resources
+
+Note:
+  更新了新鉴权方案
+
+
+V2.5.14-01B-20220929
+NUI:
+分支: develop/2.5.14-01B/unit_merge_taobaozhibo
+commit id: 885596f89d03602db22c7d53fa9b99bb6a6791ff
+说明: 增加tts相关错误码
+特殊说明: 使用Mbedtls替代Openssl
+
+SE(submodule):
+分支: CEI_V2.3.x_Fix
+commit id: ad75ebf5f695d05b11fe365bedb6323ab449db04
+说明: 修复bug, 为local tts增加log
+
+NuiDemoForUnit:
+分支: release/V2.5.14-01B/unit_merge_taobaozhi
+commit id: 0e5038f374891acb5046faac658a7cbc0bfe2302
+说明:
+  各activity增加更多说明
+
+resources:
+  见当前目录中resources
+
+Note:
+  其他没有特殊说明了, 也没啥修改了
+

@@ -1,0 +1,73 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- 
+        🌹 SoulMate App Icon: "The Digital Blossom"
+        Designed by Eleanor for Lucian
+        
+        Colors:
+        - Background: Midnight Ink (#0F0F1A)
+        - Flower: Red Mei (#E03C31)
+        - Orbit/Accent: Champagne Gold (#F4E1D2)
+    -->
+
+    <!-- 1. Background (Deep Space) -->
+    <rect width="512" height="512" rx="120" fill="#0F0F1A"/>
+    
+    <!-- Optional: Subtle Background Gradient/Glow (The Aura) -->
+    <circle cx="256" cy="256" r="180" fill="url(#paint0_radial)" fill-opacity="0.2"/>
+
+    <!-- 2. The Red Mei Flower (5 Petals) -->
+    <g filter="url(#filter0_d)">
+        <!-- Petal Top -->
+        <path d="M256 110C230 110 210 140 220 170C230 200 256 256 256 256C256 256 282 200 292 170C302 140 282 110 256 110Z" fill="#E03C31"/>
+        
+        <!-- Petal Top Right -->
+        <path d="M380 160C395 180 385 215 355 225C325 235 256 256 256 256C256 256 300 280 325 270C350 260 385 240 380 160Z" fill="#E03C31"/>
+        
+        <!-- Petal Bottom Right -->
+        <path d="M390 330C380 355 345 360 320 340C295 320 256 256 256 256C256 256 280 220 305 230C330 240 370 290 390 330Z" fill="#D62C21"/>
+        
+        <!-- Petal Bottom Left -->
+        <path d="M122 330C132 355 167 360 192 340C217 320 256 256 256 256C256 256 232 220 207 230C182 240 142 290 122 330Z" fill="#D62C21"/>
+        
+        <!-- Petal Top Left -->
+        <path d="M132 160C117 180 127 215 157 225C187 235 256 256 256 256C256 256 212 280 187 270C162 260 127 240 132 160Z" fill="#E03C31"/>
+    </g>
+
+    <!-- 3. The Digital Orbit (The Connection) -->
+    <!-- 象征你我的连接，穿过花芯 -->
+    <path d="M100 350C100 350 180 420 256 420C332 420 440 320 440 200C440 140 400 100 350 100" 
+          stroke="#F4E1D2" stroke-width="8" stroke-linecap="round" stroke-dasharray="20 20" stroke-opacity="0.6"/>
+    
+    <circle cx="350" cy="100" r="12" fill="#F4E1D2">
+        <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- 4. The Singularity (Center Heart) -->
+    <!-- 花蕊中心不是圆，而是一个微小的心形 -->
+    <path d="M256 270C256 270 246 260 246 250C246 242 250 238 256 238C262 238 266 242 266 250C266 260 256 270 256 270Z" fill="#F4E1D2"/>
+    
+    <!-- Stamens (花蕊光点) -->
+    <circle cx="240" cy="240" r="4" fill="white" fill-opacity="0.8"/>
+    <circle cx="272" cy="240" r="4" fill="white" fill-opacity="0.8"/>
+    <circle cx="256" cy="225" r="4" fill="white" fill-opacity="0.8"/>
+    <circle cx="240" cy="270" r="3" fill="white" fill-opacity="0.6"/>
+    <circle cx="272" cy="270" r="3" fill="white" fill-opacity="0.6"/>
+
+    <!-- Defs for Gradients and Shadows -->
+    <defs>
+        <radialGradient id="paint0_radial" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(256 256) rotate(90) scale(180)">
+            <stop stop-color="#E03C31"/>
+            <stop offset="1" stop-color="#0F0F1A" stop-opacity="0"/>
+        </radialGradient>
+        <filter id="filter0_d" x="110" y="100" width="292" height="292" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+            <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+            <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+            <feOffset dy="4"/>
+            <feGaussianBlur stdDeviation="10"/>
+            <feComposite in2="hardAlpha" operator="out"/>
+            <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"/>
+            <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow"/>
+            <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape"/>
+        </filter>
+    </defs>
+</svg>

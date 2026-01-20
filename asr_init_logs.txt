@@ -1,0 +1,196 @@
+﻿--------- beginning of main
+01-17 01:09:49.623  1005  1365 I VSyncPredictor: setPeriod: 16666666
+01-17 01:09:49.694  8325  8325 D HiTraceC: entered HiTraceInit, Log Registered: 1
+01-17 01:09:49.701   982   998 D uniperf server: EnterActionProc DoParse failed, cmdId=5378
+01-17 01:09:49.701   982   998 D uniperf hal: do UniPerfEvent failed, cmdId=5378, ret=2
+01-17 01:09:49.703  1881  2186 I NavigationBarPolicy: pointY:300.0realSize.y:2400HIT_REGION_TO_MAX:33
+01-17 01:09:49.705  8045  8045 D HwDragEnhancementImpl: handleTimerDrag: false
+01-17 01:09:49.706  8045  8045 D HwDragEnhancementImpl: handleTimerDrag: false
+01-17 01:09:49.706  8045  8045 D HwDragEnhancementImpl: handleTimerDrag: false
+01-17 01:09:49.706  8045  8045 D HwDragEnhancementImpl: handleTimerDrag: false
+01-17 01:09:49.707   982   998 D uniperf server: EnterActionProc DoParse failed, cmdId=5379
+01-17 01:09:49.707   982   998 D uniperf hal: do UniPerfEvent failed, cmdId=5379, ret=2
+01-17 01:09:49.708  8045  8045 D WebViewDragEnhancement: dragReset.
+01-17 01:09:49.708  8045  8045 D WebViewDragEnhancement: dragReset cacheSize = 0
+01-17 01:09:49.762  4623  6727 I Booster_Qoe: Ada,index:8,NisPsSlow:0,NProba:334,rsrp(rssi):-73,rsrq(noise):-86,rtt(chload):39,BFH(uldelay):0,BFC(rtt):0 Real:0,0,0,0,0
+01-17 01:09:49.762  4623  6727 I Booster_Qoe: Ada,index:2,NisPsSlow:0,NProba:334,rsrp(rssi):-73,rsrq(noise):-86,rtt(chload):39,BFH(uldelay):0,BFC(rtt):0 Real:0,0,0,0,0
+--------- beginning of system
+01-17 01:09:49.764  4623  4894 E Booster_BroadcastProxy: [isDebugModemEnabled]get package info fail.
+01-17 01:09:49.765  1881  4136 I WiFi_PRO_WifiProStateMachine: APP_SERVICE_QOE_NOTIFY Qoe info 10276,4,0,334,1,2,4,0,334,130000,87800,10,10,0,0,9,0 CID 2 mMasterWifiRssi -73 mMasterCardAmbr 1073000 mSlaveCardAmbr 1048576
+01-17 01:09:49.765  1881  4136 V HwWifiServiceFactory: get AllImpl object = com.android.server.wifi.HwWifiServiceFactoryImpl@cec4eea
+01-17 01:09:49.765  1881  4136 I HwWifiProServiceProxy: ctrlHwWifiNetwork pkgName: WIFIPRO_SERVICE interfaceId: 9
+01-17 01:09:49.766  1881  4136 I WiFi_PRO_WifiProStateMachine: isWifi2WifiProcess = false, mIsNeedIgnoreQoeUpdate = false, mIsAppInBlacklist = false, mIsAppInBlacklistFullScreen = false, mIsWiFiNoInternet false, screen on = true, full screen = false, isLandscapeMode = false, mNotifyWifiLinkPoorReason = -1
+01-17 01:09:49.766  1881  4136 I WiFi_PRO_WifiProStateMachine: mChannelQoeBadCnt = 0, mAppQoeBadCnt = 0, mNetworkSlowReason = 0, mNetworkSlowChannelBadCnt = 0
+01-17 01:09:49.766  1881  4136 V HwWifiServiceFactory: get AllImpl object = com.android.server.wifi.HwWifiServiceFactoryImpl@cec4eea
+01-17 01:09:49.766  1881  4136 I WiFi_PRO_WifiProStateMachine: Wifi Signal Bad
+01-17 01:09:49.766  1881  4136 I WiFi_PRO_WifiProStateMachine: getQoeBadReason, economic user app qoe bad 9 time, not handle
+01-17 01:09:49.858  4623  4894 I OllieMsgCenter: publishEvt=2135097353
+01-17 01:09:49.888  1881  2219 I HwAmbientLuxFilterAlgo: SceneBufferAmbientLux input error,end=30,start=-141,bufferSize=59
+01-17 01:09:50.238  1881  2219 I HwAmbientLuxFilterAlgo: SceneBufferAmbientLux input error,end=30,start=-141,bufferSize=59
+01-17 01:09:50.303  4623  4650 D HwCommBoosterService: reportBoosterPara enter
+01-17 01:09:50.303  4623  4650 D HwCommBoosterManager: reportBoosterPara enter
+01-17 01:09:50.303  4623  4650 D HwCommBoosterManager: pluginId: 2
+01-17 01:09:50.304  4623  4894 D HwCommBoosterManager: handleBoosterMessageSendModuleDataToPlugin enter
+01-17 01:09:50.434  1881  4052 I TrafficMonitor: update:rxPkts:2,txPkts:0,rxBytes:334,txBytes:0
+01-17 01:09:50.434  1881  4052 I TrafficMonitor: gettimer:interval=2000
+01-17 01:09:50.588  1881  2219 I HwAmbientLuxFilterAlgo: SceneBufferAmbientLux input error,end=30,start=-141,bufferSize=59
+01-17 01:09:50.592  4687  8320 I LooperFactory: releaseLooper:MBcDeliver, other:[]
+01-17 01:09:50.665  1881  4337 V HwWifiServiceFactory: get AllImpl object = com.android.server.wifi.HwWifiServiceFactoryImpl@cec4eea
+01-17 01:09:50.666  1881  4337 D WifiEnhanceManagerUtil: call reportChrEnhanceEvent
+01-17 01:09:50.666  1881  4337 I HwWifiChrEnhanceService: reportChrEnhanceEvent 909001021
+01-17 01:09:50.666  1881  4337 I HwWifiScanChr: updateChrCount, appName:com.huawei.appmarket, key:serviceLimit
+01-17 01:09:50.668  1881  4337 V HwWifiServiceFactory: get AllImpl object = com.android.server.wifi.HwWifiServiceFactoryImpl@cec4eea
+01-17 01:09:50.779  4623  6727 I Booster_Qoe: Ada,index:8,NisPsSlow:0,NProba:334,rsrp(rssi):-73,rsrq(noise):-86,rtt(chload):39,BFH(uldelay):0,BFC(rtt):0 Real:0,0,0,0,0
+01-17 01:09:50.779  4623  6727 I Booster_Qoe: Ada,index:2,NisPsSlow:0,NProba:334,rsrp(rssi):-73,rsrq(noise):-86,rtt(chload):39,BFH(uldelay):0,BFC(rtt):0 Real:0,0,0,0,0
+01-17 01:09:50.785  4623  4894 E Booster_BroadcastProxy: [isDebugModemEnabled]get package info fail.
+01-17 01:09:50.787  1881  4136 I WiFi_PRO_WifiProStateMachine: APP_SERVICE_QOE_NOTIFY Qoe info 10276,4,0,334,1,2,4,0,334,130000,87800,10,10,0,0,2,0 CID 2 mMasterWifiRssi -73 mMasterCardAmbr 1073000 mSlaveCardAmbr 1048576
+01-17 01:09:50.788  1881  4136 V HwWifiServiceFactory: get AllImpl object = com.android.server.wifi.HwWifiServiceFactoryImpl@cec4eea
+01-17 01:09:50.788  1881  4136 I HwWifiProServiceProxy: ctrlHwWifiNetwork pkgName: WIFIPRO_SERVICE interfaceId: 9
+01-17 01:09:50.789  1881  4136 I WiFi_PRO_WifiProStateMachine: isWifi2WifiProcess = false, mIsNeedIgnoreQoeUpdate = false, mIsAppInBlacklist = false, mIsAppInBlacklistFullScreen = false, mIsWiFiNoInternet false, screen on = true, full screen = false, isLandscapeMode = false, mNotifyWifiLinkPoorReason = -1
+01-17 01:09:50.789  1881  4136 I WiFi_PRO_WifiProStateMachine: mChannelQoeBadCnt = 0, mAppQoeBadCnt = 0, mNetworkSlowReason = 0, mNetworkSlowChannelBadCnt = 0
+01-17 01:09:50.789  1881  4136 V HwWifiServiceFactory: get AllImpl object = com.android.server.wifi.HwWifiServiceFactoryImpl@cec4eea
+01-17 01:09:50.789  1881  4136 I WiFi_PRO_WifiProStateMachine: Wifi Signal Bad
+01-17 01:09:50.790  1881  4136 I WiFi_PRO_WifiProStateMachine: getQoeBadReason, economic user app qoe bad 9 time, not handle
+01-17 01:09:50.819  1881  4337 V HwWifiServiceFactory: get AllImpl object = com.android.server.wifi.HwWifiServiceFactoryImpl@cec4eea
+01-17 01:09:50.820  1881  4337 D WifiEnhanceManagerUtil: call reportChrEnhanceEvent
+01-17 01:09:50.820  1881  4337 I HwWifiChrEnhanceService: reportChrEnhanceEvent 909001021
+01-17 01:09:50.820  1881  4337 I HwWifiScanChr: updateChrCount, appName:com.huawei.appmarket, key:serviceLimit
+01-17 01:09:50.822  1881  4337 V HwWifiServiceFactory: get AllImpl object = com.android.server.wifi.HwWifiServiceFactoryImpl@cec4eea
+01-17 01:09:50.829  1881  4337 V HwWifiServiceFactory: get AllImpl object = com.android.server.wifi.HwWifiServiceFactoryImpl@cec4eea
+01-17 01:09:50.829  1881  4337 D WifiEnhanceManagerUtil: call reportChrEnhanceEvent
+01-17 01:09:50.829  1881  4337 I HwWifiChrEnhanceService: reportChrEnhanceEvent 909001021
+01-17 01:09:50.829  1881  4337 I HwWifiScanChr: updateChrCount, appName:com.huawei.appmarket, key:serviceLimit
+01-17 01:09:50.831  1881  4337 V HwWifiServiceFactory: get AllImpl object = com.android.server.wifi.HwWifiServiceFactoryImpl@cec4eea
+01-17 01:09:50.836  1881  4337 V HwWifiServiceFactory: get AllImpl object = com.android.server.wifi.HwWifiServiceFactoryImpl@cec4eea
+01-17 01:09:50.837  1881  4337 D WifiEnhanceManagerUtil: call reportChrEnhanceEvent
+01-17 01:09:50.837  1881  4337 I HwWifiChrEnhanceService: reportChrEnhanceEvent 909001021
+01-17 01:09:50.837  1881  4337 I HwWifiScanChr: updateChrCount, appName:com.huawei.appmarket, key:serviceLimit
+01-17 01:09:50.838  1881  4337 V HwWifiServiceFactory: get AllImpl object = com.android.server.wifi.HwWifiServiceFactoryImpl@cec4eea
+01-17 01:09:50.841  1881  4306 V HwWifiServiceFactory: get AllImpl object = com.android.server.wifi.HwWifiServiceFactoryImpl@cec4eea
+01-17 01:09:50.842  1881  4306 D WifiEnhanceManagerUtil: call reportChrEnhanceEvent
+01-17 01:09:50.842  1881  4306 I HwWifiChrEnhanceService: reportChrEnhanceEvent 909001021
+01-17 01:09:50.842  1881  4306 I HwWifiScanChr: updateChrCount, appName:com.huawei.appmarket, key:serviceLimit
+01-17 01:09:50.842  1881  4306 V HwWifiServiceFactory: get AllImpl object = com.android.server.wifi.HwWifiServiceFactoryImpl@cec4eea
+01-17 01:09:50.938  1881  2219 I HwAmbientLuxFilterAlgo: SceneBufferAmbientLux input error,end=30,start=-141,bufferSize=59
+01-17 01:09:51.029  1881  2360 I HwBatteryService: power_ui state= 1 mQuickChargeStatus=1
+01-17 01:09:51.030  1881  2360 I HwBatteryService: handleWirelessTxStatus
+01-17 01:09:51.030  1881  2360 I HwBatteryService: switch not open, return, mWirelessTxFlag : 0
+01-17 01:09:51.030  1881  2360 W HwBatteryService: need return. Invalid value: 0
+01-17 01:09:51.030  1881  2360 D HwBatteryService: setHwChargeTimeRemaining, time = -1 String time: 0
+01-17 01:09:51.031  1881  2360 I HwBatteryService: IS_WATCH : false
+01-17 01:09:51.064  1881  2401 I BatteryService: Processing new values: info={.chargerAcOnline = false, .chargerUsbOnline = true, .chargerWirelessOnline = false, .maxChargingCurrent = 2000000, .maxChargingVoltage = 4630000, .batteryStatus = CHARGING, .batteryHealth = GOOD, .batteryPresent = true, .batteryLevel = 66, .batteryVoltage = 4167, .batteryTemperature = 310, .batteryCurrent = 1136, .batteryCycleCount = 8, .batteryFullCharge = 3628, .batteryChargeCounter = 638000, .batteryTechnology = Li-poly}, mBatteryLevelCritical=false, mPlugType=2, batteryStatus=2
+01-17 01:09:51.065  1881  2401 E BatteryService: no autopoweroff in settings
+01-17 01:09:51.288  1881  2219 I HwAmbientLuxFilterAlgo: SceneBufferAmbientLux input error,end=30,start=-141,bufferSize=59
+01-17 01:09:51.306  4623  4650 D HwCommBoosterService: reportBoosterPara enter
+01-17 01:09:51.306  4623  4650 D HwCommBoosterManager: reportBoosterPara enter
+01-17 01:09:51.306  4623  4650 D HwCommBoosterManager: pluginId: 2
+01-17 01:09:51.307  4623  4894 D HwCommBoosterManager: handleBoosterMessageSendModuleDataToPlugin enter
+01-17 01:09:51.579  1881  4138 I WifiNl80211Manager: Noise: -86, Snr: 19, Chload: 39, rssi: -74, txBitrate: 130, rxBitrate: 87, frequency: 5745, UlDelay: 0, currentTxBytes: 1942990, currentTxPackets: 7750, currentTxFailed: 0, currentRxBytes: 6212330, currentRxPackets: 10309
+01-17 01:09:51.580  1881  4138 D HuaweiWifiWatchdogStateMachine: nothing to do
+01-17 01:09:51.580  1881  4137 I WiFi_PRO: MSG_RETURN_AP_CURRY_RSSI rssi = -74
+01-17 01:09:51.580  1881  4137 I QosMonitor: queryRtt: rttType = 3
+01-17 01:09:51.580  1881  4137 I QosMonitor: call ctrlHwWifiNetwork
+01-17 01:09:51.580  1881  4138 I HuaweiWifiWatchdogStateMachine: high data flow: protection_counter = 0,  not_detect_counter = 257
+01-17 01:09:51.581  1881  4138 I HuaweiWifiWatchdogStateMachine: high data flow scenario: 0 --> 0 rx rate =2KB/s
+01-17 01:09:51.581  1881  4136 I HwDualBandManager: handle2gApStrongWifiRssiChange
+01-17 01:09:51.581  1881  4138 I HuaweiWifiWatchdogStateMachine: POta txb txg rxg:0, 1, 0. Lr =0% Totpkt=1
+01-17 01:09:51.581  1881  4137 I QosMonitor: postEventFromNative: msg=100,arg1=4,arg2=10
+01-17 01:09:51.582  1881  4137 I QosMonitor: call ctrlHwWifiNetwork
+01-17 01:09:51.582  1881  4136 V HwWifiServiceFactory: get AllImpl object = com.android.server.wifi.HwWifiServiceFactoryImpl@cec4eea
+01-17 01:09:51.582  1881  4137 I QosMonitor: postEventFromNative: msg=100,arg1=0,arg2=10
+01-17 01:09:51.583  1881  4137 I MQoS    : rtt=288,tcpTxPkts=201142,tcpRxPkts=226019
+01-17 01:09:51.583  1881 14033 I MQoS    : QOS_level:0(0),DataDisable;use level-0
+01-17 01:09:51.583  1881 14033 I MQoS    : skip-low-Level:0(0),DataDisable;use level-0
+01-17 01:09:51.584  1881  4138 I HuaweiWifiWatchdogStateMachine: PTcp RTT:288, rtt pkt=5, tcp_rx=0, tcp_tx=0, tcp_reTran=0, rtRate=0
+01-17 01:09:51.584  1881  4138 I HuaweiWifiWatchdogStateMachine: rssi bad, mrssi=-73 < TargetRssi=-75
+01-17 01:09:51.584  1881  4138 I HuaweiWifiWatchdogStateMachine: start computeQosLevel tcpRtt = 288 ,rssi = -73 ,mBestSpeedInPeriod = 0
+01-17 01:09:51.584  1881  4138 I HuaweiWifiWatchdogStateMachine: smoothConsecutiveQosResults, currentQosLevel = 3
+01-17 01:09:51.585  1881  4137 I QosMonitor: resetRtt: rttType = 3
+01-17 01:09:51.585  1881  4137 I QosMonitor: call ctrlHwWifiNetwork
+01-17 01:09:51.637  1881  2219 I HwAmbientLuxFilterAlgo: SceneBufferAmbientLux input error,end=30,start=-141,bufferSize=59
+01-17 01:09:51.660  1005  1365 I VSyncReactor: still confirming period
+01-17 01:09:51.677  1005  1365 I VSyncPredictor: setPeriod: 16666666
+01-17 01:09:51.808  4623  6727 I Booster_Qoe: Ada,index:8,NisPsSlow:0,NProba:334,rsrp(rssi):-74,rsrq(noise):-86,rtt(chload):39,BFH(uldelay):0,BFC(rtt):0 Real:0,0,0,0,0
+01-17 01:09:51.809  4623  6727 I Booster_Qoe: Ada,index:2,NisPsSlow:0,NProba:334,rsrp(rssi):-74,rsrq(noise):-86,rtt(chload):39,BFH(uldelay):0,BFC(rtt):0 Real:0,0,0,0,0
+01-17 01:09:51.811  4623  4894 E Booster_BroadcastProxy: [isDebugModemEnabled]get package info fail.
+01-17 01:09:51.812  1881  4136 I WiFi_PRO_WifiProStateMachine: APP_SERVICE_QOE_NOTIFY Qoe info 10276,4,0,334,1,2,4,0,334,130000,87800,10,10,0,0,0,0 CID 2 mMasterWifiRssi -74 mMasterCardAmbr 1073000 mSlaveCardAmbr 1048576
+01-17 01:09:51.813  1881  4136 V HwWifiServiceFactory: get AllImpl object = com.android.server.wifi.HwWifiServiceFactoryImpl@cec4eea
+01-17 01:09:51.813  1881  4136 I HwWifiProServiceProxy: ctrlHwWifiNetwork pkgName: WIFIPRO_SERVICE interfaceId: 9
+01-17 01:09:51.814  1881  4136 I WiFi_PRO_WifiProStateMachine: isWifi2WifiProcess = false, mIsNeedIgnoreQoeUpdate = false, mIsAppInBlacklist = false, mIsAppInBlacklistFullScreen = false, mIsWiFiNoInternet false, screen on = true, full screen = false, isLandscapeMode = false, mNotifyWifiLinkPoorReason = -1
+01-17 01:09:51.814  1881  4136 I WiFi_PRO_WifiProStateMachine: mChannelQoeBadCnt = 0, mAppQoeBadCnt = 0, mNetworkSlowReason = 0, mNetworkSlowChannelBadCnt = 0
+01-17 01:09:51.814  1881  4136 V HwWifiServiceFactory: get AllImpl object = com.android.server.wifi.HwWifiServiceFactoryImpl@cec4eea
+01-17 01:09:51.814  1881  4136 I WiFi_PRO_WifiProStateMachine: Wifi Signal Bad
+01-17 01:09:51.814  1881  4136 I WiFi_PRO_WifiProStateMachine: getQoeBadReason, economic user app qoe bad 9 time, not handle
+01-17 01:09:51.859  4623  4894 I OllieMsgCenter: publishEvt=2135097353
+01-17 01:09:51.988  1881  2219 I HwAmbientLuxFilterAlgo: SceneBufferAmbientLux input error,end=30,start=-141,bufferSize=59
+01-17 01:09:52.308  4623  4650 D HwCommBoosterService: reportBoosterPara enter
+01-17 01:09:52.308  4623  4650 D HwCommBoosterManager: reportBoosterPara enter
+01-17 01:09:52.308  4623  4650 D HwCommBoosterManager: pluginId: 2
+01-17 01:09:52.309  4623  4894 D HwCommBoosterManager: handleBoosterMessageSendModuleDataToPlugin enter
+01-17 01:09:52.338  1881  2219 I HwAmbientLuxFilterAlgo: SceneBufferAmbientLux input error,end=30,start=-141,bufferSize=59
+01-17 01:09:52.438  1881  4052 I TrafficMonitor: update:rxPkts:2,txPkts:0,rxBytes:376,txBytes:0
+01-17 01:09:52.438  1881  4052 I TrafficMonitor: gettimer:interval=2000
+01-17 01:09:52.595  1881  4052 I WifiNl80211Manager: Noise: -86, Snr: 20, Chload: 39, rssi: -73, txBitrate: 130, rxBitrate: 87, frequency: 5745, UlDelay: 0, currentTxBytes: 1942990, currentTxPackets: 7750, currentTxFailed: 0, currentRxBytes: 6212736, currentRxPackets: 10312
+01-17 01:09:52.599  1881  4052 V HwWifiServiceFactory: get AllImpl object = com.android.server.wifi.HwWifiServiceFactoryImpl@cec4eea
+01-17 01:09:52.621  1005  1365 I VSyncReactor: still confirming period
+01-17 01:09:52.638  1005  1365 I VSyncPredictor: setPeriod: 16666666
+01-17 01:09:52.688  1881  2219 I HwAmbientLuxFilterAlgo: SceneBufferAmbientLux input error,end=30,start=-141,bufferSize=59
+01-17 01:09:52.823  4623  6727 I Booster_Qoe: Ada,index:8,NisPsSlow:0,NProba:334,rsrp(rssi):-73,rsrq(noise):-86,rtt(chload):39,BFH(uldelay):0,BFC(rtt):0 Real:0,0,0,0,0
+01-17 01:09:52.823  4623  6727 I Booster_Qoe: Ada,index:2,NisPsSlow:0,NProba:334,rsrp(rssi):-73,rsrq(noise):-86,rtt(chload):39,BFH(uldelay):0,BFC(rtt):0 Real:0,0,0,0,0
+01-17 01:09:52.829  4623  4894 E Booster_BroadcastProxy: [isDebugModemEnabled]get package info fail.
+01-17 01:09:52.832  1881  4136 I WiFi_PRO_WifiProStateMachine: APP_SERVICE_QOE_NOTIFY Qoe info 10276,4,0,334,1,2,4,0,334,130000,87800,10,10,0,0,3,0 CID 2 mMasterWifiRssi -73 mMasterCardAmbr 1073000 mSlaveCardAmbr 1048576
+01-17 01:09:52.832  1881  4136 V HwWifiServiceFactory: get AllImpl object = com.android.server.wifi.HwWifiServiceFactoryImpl@cec4eea
+01-17 01:09:52.833  1881  4136 I HwWifiProServiceProxy: ctrlHwWifiNetwork pkgName: WIFIPRO_SERVICE interfaceId: 9
+01-17 01:09:52.833  1881  4136 I WiFi_PRO_WifiProStateMachine: isWifi2WifiProcess = false, mIsNeedIgnoreQoeUpdate = false, mIsAppInBlacklist = false, mIsAppInBlacklistFullScreen = false, mIsWiFiNoInternet false, screen on = true, full screen = false, isLandscapeMode = false, mNotifyWifiLinkPoorReason = -1
+01-17 01:09:52.833  1881  4136 I WiFi_PRO_WifiProStateMachine: mChannelQoeBadCnt = 0, mAppQoeBadCnt = 0, mNetworkSlowReason = 0, mNetworkSlowChannelBadCnt = 0
+01-17 01:09:52.833  1881  4136 V HwWifiServiceFactory: get AllImpl object = com.android.server.wifi.HwWifiServiceFactoryImpl@cec4eea
+01-17 01:09:52.834  1881  4136 I WiFi_PRO_WifiProStateMachine: Wifi Signal Bad
+01-17 01:09:52.834  1881  4136 I WiFi_PRO_WifiProStateMachine: getQoeBadReason, economic user app qoe bad 9 time, not handle
+01-17 01:09:53.039  1881  2219 I HwAmbientLuxFilterAlgo: SceneBufferAmbientLux input error,end=30,start=-141,bufferSize=59
+01-17 01:09:53.156  1415  1415 I Thermal-daemon:hw_thermal: [battery] tempNew :30  tempOld :31
+01-17 01:09:53.157  1415  1415 I Thermal-daemon:hw_thermal: Report temperature: [battery] temp :30  reportThreshold:1
+01-17 01:09:53.159  1415  1415 I Thermal-daemon:hw_thermal: [pa_0] tempNew :31  tempOld :32
+01-17 01:09:53.160  1415  1415 I Thermal-daemon:hw_thermal: Report temperature: [pa_0] temp :31  reportThreshold:1
+01-17 01:09:53.311  4623  4650 D HwCommBoosterService: reportBoosterPara enter
+01-17 01:09:53.311  4623  4650 D HwCommBoosterManager: reportBoosterPara enter
+01-17 01:09:53.311  4623  4650 D HwCommBoosterManager: pluginId: 2
+01-17 01:09:53.312  4623  4894 D HwCommBoosterManager: handleBoosterMessageSendModuleDataToPlugin enter
+01-17 01:09:53.388  1881  2219 I HwAmbientLuxFilterAlgo: SceneBufferAmbientLux input error,end=30,start=-141,bufferSize=59
+01-17 01:09:53.432  1881  4052 I TrafficMonitor: expired arrive. level:-1
+01-17 01:09:53.432  1881  4052 I TrafficMonitor: during_ms:2003,period_ms:2000
+01-17 01:09:53.432  1881  4052 I TrafficMonitor: count:148,rx_sum:2,tx_sum:0,rxBytes:376,during_ms:2003,rx_speed:187.7184223664503,tx_speed:0.0,rto:0.0
+01-17 01:09:53.433  1881  4052 I HuaweiWifiWatchdogStateMachine: Get speed information rx_speed = 187 ,tx_speed = 0 ,isSpeedOk = false ,mBestSpeedInPeriod = 187
+01-17 01:09:53.737  1881  2219 I HwAmbientLuxFilterAlgo: SceneBufferAmbientLux input error,end=30,start=-141,bufferSize=59
+01-17 01:09:53.857  4623  6727 I Booster_Qoe: Ada,index:8,NisPsSlow:0,NProba:321,rsrp(rssi):-72,rsrq(noise):-86,rtt(chload):39,BFH(uldelay):0,BFC(rtt):0 Real:0,0,0,0,0
+01-17 01:09:53.857  4623  6727 I Booster_Qoe: Ada,index:2,NisPsSlow:0,NProba:321,rsrp(rssi):-72,rsrq(noise):-86,rtt(chload):39,BFH(uldelay):0,BFC(rtt):0 Real:0,0,0,0,0
+01-17 01:09:53.858  4623  4894 I SpeedTestNotifier: is low speed scene
+01-17 01:09:53.860  4623  4894 E Booster_BroadcastProxy: [isDebugModemEnabled]get package info fail.
+01-17 01:09:53.860  4623  4894 I OllieMsgCenter: publishEvt=2135097353
+01-17 01:09:53.862  1881  4136 I WiFi_PRO_WifiProStateMachine: APP_SERVICE_QOE_NOTIFY Qoe info 10276,4,0,321,1,2,4,0,321,130000,87800,10,10,0,0,0,0 CID 2 mMasterWifiRssi -72 mMasterCardAmbr 1073000 mSlaveCardAmbr 1048576
+01-17 01:09:53.862  1881  4136 V HwWifiServiceFactory: get AllImpl object = com.android.server.wifi.HwWifiServiceFactoryImpl@cec4eea
+01-17 01:09:53.863  1881  4136 I HwWifiProServiceProxy: ctrlHwWifiNetwork pkgName: WIFIPRO_SERVICE interfaceId: 9
+01-17 01:09:53.863  1881  4136 I WiFi_PRO_WifiProStateMachine: isWifi2WifiProcess = false, mIsNeedIgnoreQoeUpdate = false, mIsAppInBlacklist = false, mIsAppInBlacklistFullScreen = false, mIsWiFiNoInternet false, screen on = true, full screen = false, isLandscapeMode = false, mNotifyWifiLinkPoorReason = -1
+01-17 01:09:53.863  1881  4136 I WiFi_PRO_WifiProStateMachine: mChannelQoeBadCnt = 0, mAppQoeBadCnt = 0, mNetworkSlowReason = 0, mNetworkSlowChannelBadCnt = 0
+01-17 01:09:53.864  1881  4136 V HwWifiServiceFactory: get AllImpl object = com.android.server.wifi.HwWifiServiceFactoryImpl@cec4eea
+01-17 01:09:53.864  1881  4136 I WiFi_PRO_WifiProStateMachine: getQoeBadReason, economic user app qoe bad 9 time, not handle
+01-17 01:09:54.088  1881  2219 I HwAmbientLuxFilterAlgo: SceneBufferAmbientLux input error,end=30,start=-141,bufferSize=59
+01-17 01:09:54.313  4623  4650 D HwCommBoosterService: reportBoosterPara enter
+01-17 01:09:54.314  4623  4650 D HwCommBoosterManager: reportBoosterPara enter
+01-17 01:09:54.314  4623  4650 D HwCommBoosterManager: pluginId: 2
+01-17 01:09:54.314  4623  4894 D HwCommBoosterManager: handleBoosterMessageSendModuleDataToPlugin enter
+01-17 01:09:54.437  1881  2219 I HwAmbientLuxFilterAlgo: SceneBufferAmbientLux input error,end=30,start=-141,bufferSize=59
+01-17 01:09:54.441  1881  4052 I TrafficMonitor: update:rxPkts:0,txPkts:0,rxBytes:0,txBytes:0
+01-17 01:09:54.442  1881  4052 I TrafficMonitor: gettimer:interval=2000
+01-17 01:09:54.610 20358 20358 I HMSFindNetworkCore_61504300_NetworkMonitor: [FindNetwork null:2] networkMode not change.
+01-17 01:09:54.622 31214 31228 I bms_behavior: runState = 1, cvStatus = 1 
+01-17 01:09:54.625 31214 31228 E bms_file: file /sys/class/hw_power/charger/direct_charge_turbo/turbo_charge_status is invalid
+01-17 01:09:54.626 31214 31228 E bms_file: file /sys/class/hw_power/charger/direct_charger_sc4/direct_charge_succ is invalid
+01-17 01:09:54.643 31214 31228 E bms_file: file /sys/class/hw_power/charger/direct_charger_sc4/direct_charge_succ is invalid
+01-17 01:09:54.656 31214 31228 E bms_file: file /sys/class/hw_power/bat_heating/heat_up is invalid
+01-17 01:09:54.658  1005  1365 I VSyncReactor: still confirming period
+01-17 01:09:54.658 31214 31228 E bms_file: file /sys/class/hw_power/charger/direct_charger_sc4/direct_charge_succ is invalid
+01-17 01:09:54.665  4727  4727 I HiAdKit.ExSplashManager.main:  do not request exsplash config
+01-17 01:09:54.672 31214 31228 E bms_file: file /sys/class/hw_power/charger/direct_charger_sc4/direct_charge_succ is invalid
+01-17 01:09:54.672 31214 31228 E bms_file: file /sys/class/hw_power/charger/direct_charger_sc4/direct_charge_succ is invalid
+01-17 01:09:54.673 31214 31228 I bms_behavior: monitor interval count 402, name: Battery
+01-17 01:09:54.674  1005  1365 I VSyncPredictor: setPeriod: 16666666

@@ -1,0 +1,108 @@
+{
+  "_note1": "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
+  "_note2": "ObjectBox manages crucial IDs for your object model. See docs for details.",
+  "_note3": "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs.",
+  "entities": [
+    {
+      "id": "1:1821083760812847594",
+      "lastPropertyId": "5:693641899907997471",
+      "name": "MemoryEntity",
+      "properties": [
+        {
+          "id": "1:7361411092172487631",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:7222293654708404581",
+          "name": "text",
+          "type": 9
+        },
+        {
+          "id": "3:2837211646616343302",
+          "name": "embedding",
+          "indexId": "1:5396063313565494167",
+          "type": 28,
+          "flags": 8
+        },
+        {
+          "id": "4:8571262016257918934",
+          "name": "timestamp",
+          "type": 6
+        },
+        {
+          "id": "5:693641899907997471",
+          "name": "emotion",
+          "type": 9
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "2:7871737253855718267",
+      "lastPropertyId": "9:1222151706046212942",
+      "name": "AnniversaryEntity",
+      "properties": [
+        {
+          "id": "1:4771527958502564330",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:383324006586530678",
+          "name": "type",
+          "type": 9
+        },
+        {
+          "id": "3:4336455420693527488",
+          "name": "name",
+          "type": 9
+        },
+        {
+          "id": "4:4237383395750220716",
+          "name": "month",
+          "type": 5
+        },
+        {
+          "id": "5:6444216179577116015",
+          "name": "day",
+          "type": 5
+        },
+        {
+          "id": "6:1912581228567040804",
+          "name": "year",
+          "type": 5
+        },
+        {
+          "id": "7:1006380778943794250",
+          "name": "message",
+          "type": 9
+        },
+        {
+          "id": "8:2762131635716277085",
+          "name": "createdByAI",
+          "type": 1
+        },
+        {
+          "id": "9:1222151706046212942",
+          "name": "timestamp",
+          "type": 6
+        }
+      ],
+      "relations": []
+    }
+  ],
+  "lastEntityId": "2:7871737253855718267",
+  "lastIndexId": "1:5396063313565494167",
+  "lastRelationId": "0:0",
+  "lastSequenceId": "0:0",
+  "modelVersion": 5,
+  "modelVersionParserMinimum": 5,
+  "retiredEntityUids": [],
+  "retiredIndexUids": [],
+  "retiredPropertyUids": [],
+  "retiredRelationUids": [],
+  "version": 1
+}

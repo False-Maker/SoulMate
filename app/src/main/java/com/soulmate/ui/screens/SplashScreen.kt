@@ -16,11 +16,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Brush
+import com.soulmate.ui.components.ParticleBackground
 import com.soulmate.ui.theme.SoulMateTheme
 
 /**
  * SplashScreen - 启动屏幕
- * 
+ *
  * 显示应用 Logo 和加载指示器
  */
 @Composable
@@ -30,9 +32,23 @@ fun SplashScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        SoulMateTheme.colors.bgGradientStart,
+                        SoulMateTheme.colors.bgGradientEnd
+                    )
+                )
+            ),
         contentAlignment = Alignment.Center
     ) {
+        // 1. Background
+        ParticleBackground(
+            modifier = Modifier.fillMaxSize(),
+            particleColor = SoulMateTheme.colors.particleColor,
+            lineColor = SoulMateTheme.colors.cardBorder
+        )
+
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -41,7 +57,7 @@ fun SplashScreen(
                 text = "SoulMate",
                 style = MaterialTheme.typography.displayMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+                color = SoulMateTheme.colors.textPrimary
             )
             
             Spacer(modifier = Modifier.height(8.dp))
@@ -49,14 +65,14 @@ fun SplashScreen(
             Text(
                 text = "你的 AI 灵魂伴侣",
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+                color = SoulMateTheme.colors.textSecondary
             )
             
             Spacer(modifier = Modifier.height(48.dp))
             
             CircularProgressIndicator(
                 modifier = Modifier.size(32.dp),
-                color = MaterialTheme.colorScheme.primary,
+                color = SoulMateTheme.colors.accentColor,
                 strokeWidth = 3.dp
             )
         }

@@ -9,7 +9,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -25,15 +28,20 @@ import com.soulmate.ui.screens.OnboardingScreen
 import com.soulmate.ui.screens.SettingsScreen
 import com.soulmate.ui.screens.SplashScreen
 import com.soulmate.ui.screens.DigitalHumanScreen
+import com.soulmate.ui.screens.CrisisResourceScreen
+import com.soulmate.ui.screens.CrisisResourceScreen
+import com.soulmate.ui.screens.EmotionalReportScreen
+import com.soulmate.ui.screens.ImmersiveFusionScreen
 import com.soulmate.ui.theme.SoulMateTheme
+import com.soulmate.ui.theme.SoulMateThemeMode
 import com.soulmate.ui.viewmodel.OnboardingViewModel
 import kotlinx.coroutines.delay
 
 /**
  * SoulMateApp - 应用主 Composable
- * 
+ *
  * 托管 NavHost 和主题，管理应用级别的 UI 结构
- * 
+ *
  * @param navController Navigation controller for managing navigation
  * @param initialRoute Optional route to navigate to immediately (for deep links from notifications)
  */
@@ -42,36 +50,40 @@ fun SoulMateApp(
     navController: NavHostController = rememberNavController(),
     initialRoute: String? = null
 ) {
-    SoulMateTheme {
+    // Hoist Theme State here to be shared across all screens
+    var themeMode by remember { mutableStateOf(SoulMateThemeMode.Tech) }
+
+    SoulMateTheme(themeMode = themeMode) {
         NavHost(
             navController = navController,
             startDestination = Screen.Splash.route,
             modifier = Modifier.fillMaxSize(),
-            // 底部向上滑入动画
+            // 优化转场动画：使用标准的水平滑动 + 淡入淡出，更加自然丝滑
+            // 进入页面：从右侧滑入
             enterTransition = {
                 slideIntoContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.Up,
+                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
                     animationSpec = tween(300)
                 ) + fadeIn(animationSpec = tween(300))
             },
-            // 底部向下滑出动画
+            // 退出页面：向左侧滑出
             exitTransition = {
                 slideOutOfContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.Down,
+                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
                     animationSpec = tween(300)
                 ) + fadeOut(animationSpec = tween(300))
             },
-            // 返回时的进入动画
+            // 返回时的进入：从左侧滑回（恢复）
             popEnterTransition = {
                 slideIntoContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.Up,
+                    towards = AnimatedContentTransitionScope.SlideDirection.Right,
                     animationSpec = tween(300)
                 ) + fadeIn(animationSpec = tween(300))
             },
-            // 返回时的退出动画
+            // 返回时的退出：向右侧滑出
             popExitTransition = {
                 slideOutOfContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.Down,
+                    towards = AnimatedContentTransitionScope.SlideDirection.Right,
                     animationSpec = tween(300)
                 ) + fadeOut(animationSpec = tween(300))
             }
@@ -131,20 +143,27 @@ fun SoulMateApp(
                 )
             }
             
-            // Home Screen
+            // Home Screen (Now Fusion Screen)
             composable(Screen.Home.route) {
-                HomeScreen(
-                    onNavigateToChat = {
-                        navController.navigate(Screen.Chat.route)
+                ImmersiveFusionScreen(
+                    onNavigateBack = {
+                        // In Home/Fusion, back might exit app or go to bg
                     },
                     onNavigateToGarden = {
-                        navController.navigate(Screen.Garden.route)
+                        navController.navigate(Screen.Garden.route) {
+                            launchSingleTop = true
+                        }
                     },
                     onNavigateToSettings = {
-                        navController.navigate(Screen.Settings.route)
-                    }
+                        navController.navigate(Screen.Settings.route) {
+                            launchSingleTop = true
+                        }
+                    },
+                    currentThemeMode = themeMode,
+                    onThemeChange = { newMode -> themeMode = newMode }
                 )
             }
+
             
 
 
@@ -155,7 +174,12 @@ fun SoulMateApp(
                         navController.popBackStack()
                     },
                     onNavigateToDigitalHuman = {
-                        navController.navigate(Screen.DigitalHuman.route)
+                        val popped = navController.popBackStack(Screen.DigitalHuman.route, false)
+                        if (!popped) {
+                            navController.navigate(Screen.DigitalHuman.route) {
+                                launchSingleTop = true
+                            }
+                        }
                     }
                 )
             }
@@ -165,14 +189,6 @@ fun SoulMateApp(
                 DigitalHumanScreen(
                     onNavigateBack = {
                         navController.popBackStack()
-                    },
-                    onNavigateToTextChat = {
-                       // Pop back to ChatScreen if it's in stack, or navigate
-                       // Usually DigitalHuman is entered FROM ChatScreen, so popBackStack helps return to it.
-                       // But providing explicit navigation is safer if entered from elsewhere?
-                       // If we want to switch TO text chat, we assume we might be there.
-                       // Use popBackStack() for now as it acts as a toggle.
-                       navController.popBackStack()
                     }
                 )
             }
@@ -182,6 +198,14 @@ fun SoulMateApp(
                 MemoryGardenScreen(
                     onNavigateBack = {
                         navController.popBackStack()
+                    },
+                    onNavigateToChat = {
+                        val popped = navController.popBackStack(Screen.Chat.route, false)
+                        if (!popped) {
+                            navController.navigate(Screen.Chat.route) {
+                                launchSingleTop = true
+                            }
+                        }
                     }
                 )
             }
@@ -191,10 +215,74 @@ fun SoulMateApp(
                 SettingsScreen(
                     onNavigateBack = {
                         navController.popBackStack()
+                    },
+                    onNavigateToResources = {
+                        navController.navigate(Screen.CrisisResources.route)
+                    },
+                    onNavigateToReport = {
+                        navController.navigate(Screen.EmotionalReport.route)
+                    }
+                )
+            }
+            
+            // Crisis Resources Screen
+            composable(Screen.CrisisResources.route) {
+                CrisisResourceScreen(
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+            
+            // Immersive Fusion Screen (Main Hub)
+            composable(Screen.Fusion.route) {
+                ImmersiveFusionScreen(
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    },
+                    onNavigateToGarden = {
+                        navController.navigate(Screen.Garden.route) {
+                            launchSingleTop = true
+                        }
+                    },
+                    onNavigateToSettings = {
+                        navController.navigate(Screen.Settings.route) {
+                            launchSingleTop = true
+                        }
+                    },
+                    currentThemeMode = themeMode,
+                    onThemeChange = { newMode -> themeMode = newMode }
+                )
+            }
+
+            // Chat Screen (Deprecated, kept for reference if needed, or route can be removed)
+            composable(Screen.Chat.route) {
+                // Redirect to Fusion
+                ImmersiveFusionScreen(
+                     onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+            
+            // Digital Human Screen (Deprecated)
+            composable(Screen.DigitalHuman.route) {
+                 // Redirect to Fusion
+                ImmersiveFusionScreen(
+                     onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+            
+            // Emotional Report Screen
+            composable(Screen.EmotionalReport.route) {
+                EmotionalReportScreen(
+                    onNavigateBack = {
+                        navController.popBackStack()
                     }
                 )
             }
         }
     }
 }
-

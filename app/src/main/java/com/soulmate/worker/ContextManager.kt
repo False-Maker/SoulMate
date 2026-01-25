@@ -71,19 +71,19 @@ class ContextManager @Inject constructor(
         val charging = isCharging()
         
         if (level < 0) {
-            return "Unable to determine battery status."
+            return "无法获取电池状态。"
         }
         
         val statusDescription = when {
-            level == 100 && charging -> "fully charged"
-            level >= 80 && charging -> "charging, almost full"
-            charging -> "charging"
-            level <= 15 -> "low, not charging"
-            level <= 30 -> "moderate, not charging"
-            else -> "good"
+            level == 100 && charging -> "已充满"
+            level >= 80 && charging -> "充电中，即将充满"
+            charging -> "充电中"
+            level <= 15 -> "电量低，未充电"
+            level <= 30 -> "电量适中，未充电"
+            else -> "电量充足"
         }
         
-        return "User has $level% battery ($statusDescription)."
+        return "用户还有 $level% 电量 ($statusDescription)。"
     }
     
     /**

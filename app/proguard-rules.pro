@@ -36,3 +36,30 @@
 
 # Aliyun NUI SDK (ASR)
 -keep class com.alibaba.idst.nui.* { *; }
+
+# ===========================================
+# 数据模型保护 (Gson/Retrofit 序列化必需)
+# ===========================================
+# 保持所有 data model 类，防止混淆导致 JSON 解析失败
+-keep class com.soulmate.data.model.** { *; }
+-keep class com.soulmate.data.model.llm.** { *; }
+-keep class com.soulmate.core.data.memory.MemoryEntity { *; }
+
+# Gson 特定规则
+-keepattributes Signature
+-keepattributes *Annotation*
+-keepattributes EnclosingMethod
+-keepattributes InnerClasses
+
+# Retrofit 规则
+-keepclassmembers,allowshrinking,allowobfuscation interface * {
+    @retrofit2.http.* <methods>;
+}
+-dontwarn retrofit2.**
+-keep class retrofit2.** { *; }
+
+# OkHttp 规则
+-dontwarn okhttp3.**
+-dontwarn okio.**
+-keep class okhttp3.** { *; }
+-keep class okio.** { *; }

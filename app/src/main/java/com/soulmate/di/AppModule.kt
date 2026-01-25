@@ -1,7 +1,5 @@
 package com.soulmate.di
 
-import com.soulmate.data.memory.ObjectBoxVectorSearchEngine
-import com.soulmate.data.memory.VectorSearchEngine
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -16,9 +14,11 @@ import javax.inject.Singleton
 import dagger.hilt.android.qualifiers.ApplicationContext
 import android.content.Context
 import io.objectbox.BoxStore
-import com.soulmate.MyObjectBox
+import com.soulmate.core.data.MyObjectBox
 import com.soulmate.core.data.memory.MemoryRepository
 import com.soulmate.core.data.memory.ObjectBoxMemoryRepository
+import com.soulmate.core.data.chat.ChatRepository
+import com.soulmate.core.data.chat.ObjectBoxChatRepository
 
 /**
  * Qualifier for Application-scoped CoroutineScope.
@@ -112,24 +112,18 @@ object DatabaseModule {
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class AppModule {
-    
-    /**
-     * Binds VectorSearchEngine interface to ObjectBoxVectorSearchEngine implementation.
-     * 
-     * Uses ObjectBox's HNSW (Hierarchical Navigable Small World) index for efficient
-     * approximate nearest neighbor search with cosine distance.
-     */
-    @Binds
-    @Singleton
-    abstract fun bindVectorSearchEngine(
-        objectBoxVectorSearchEngine: ObjectBoxVectorSearchEngine
-    ): VectorSearchEngine
 
     @Binds
     @Singleton
     abstract fun bindMemoryRepository(
         objectBoxMemoryRepository: ObjectBoxMemoryRepository
     ): MemoryRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindChatRepository(
+        objectBoxChatRepository: ObjectBoxChatRepository
+    ): ChatRepository
 
     @Binds
     @Singleton

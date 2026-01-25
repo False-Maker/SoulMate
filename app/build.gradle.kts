@@ -10,7 +10,6 @@ if (localPropertiesFile.exists()) {
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.ksp)
     id("kotlin-kapt")
     alias(libs.plugins.hilt.android)
     id("kotlin-parcelize")
@@ -32,18 +31,26 @@ android {
         // Xmov Digital Human SDK - 男性数字人 (给女性用户看)
         buildConfigField("String", "XMOV_APP_ID_MALE", "\"${localProperties.getProperty("XMOV_APP_ID_MALE") ?: ""}\"")
         buildConfigField("String", "XMOV_APP_SECRET_MALE", "\"${localProperties.getProperty("XMOV_APP_SECRET_MALE") ?: ""}\"")
+        // Xmov Gateway URL (可配置)
+        buildConfigField("String", "XMOV_GATEWAY_URL", "\"${localProperties.getProperty("XMOV_GATEWAY_URL") ?: "https://nebula-agent.xingyun3d.com/user/v1/ttsa/session"}\"")
         
         // Doubao LLM (火山引擎方舟)
         buildConfigField("String", "DOUBAO_API_KEY", "\"${localProperties.getProperty("DOUBAO_API_KEY") ?: ""}\"")
         buildConfigField("String", "DOUBAO_MODEL_ID", "\"${localProperties.getProperty("DOUBAO_MODEL_ID") ?: ""}\"")
         buildConfigField("String", "DOUBAO_BASE_URL", "\"${localProperties.getProperty("DOUBAO_BASE_URL") ?: "https://ark.cn-beijing.volces.com/api/v3"}\"")
         
+        // Doubao 多模态端点 (Phase 1)
+        buildConfigField("String", "DOUBAO_CHAT_ENDPOINT_ID", "\"${localProperties.getProperty("DOUBAO_CHAT_ENDPOINT_ID") ?: ""}\"")
+        buildConfigField("String", "DOUBAO_VISION_ENDPOINT_ID", "\"${localProperties.getProperty("DOUBAO_VISION_ENDPOINT_ID") ?: ""}\"")
+        buildConfigField("String", "DOUBAO_IMAGE_GEN_ENDPOINT_ID", "\"${localProperties.getProperty("DOUBAO_IMAGE_GEN_ENDPOINT_ID") ?: ""}\"")
+        buildConfigField("String", "DOUBAO_EMBEDDING_ENDPOINT_ID", "\"${localProperties.getProperty("DOUBAO_EMBEDDING_ENDPOINT_ID") ?: ""}\"")
+        
         // Aliyun ASR
         buildConfigField("String", "ALIYUN_ASR_APP_KEY", "\"${localProperties.getProperty("ALIYUN_ASR_APP_KEY") ?: ""}\"")
         buildConfigField("String", "ALIYUN_ACCESS_KEY_ID", "\"${localProperties.getProperty("ALIYUN_ACCESS_KEY_ID") ?: ""}\"")
         buildConfigField("String", "ALIYUN_ACCESS_KEY_SECRET", "\"${localProperties.getProperty("ALIYUN_ACCESS_KEY_SECRET") ?: ""}\"")
         
-        // Doubao Embedding (火山引擎向量模型)
+        // Doubao Embedding (火山引擎向量模型) - 保留旧配置兼容
         buildConfigField("String", "DOUBAO_EMBEDDING_MODEL_ID", "\"${localProperties.getProperty("DOUBAO_EMBEDDING_MODEL_ID") ?: ""}\"")
         buildConfigField("String", "DOUBAO_EMBEDDING_API_KEY", "\"${localProperties.getProperty("DOUBAO_EMBEDDING_API_KEY") ?: ""}\"")
         applicationId = "com.soulmate"
@@ -72,6 +79,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
     
     kotlinOptions {
@@ -116,6 +124,7 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
+    implementation("androidx.cardview:cardview:1.0.0")
     
     // Compose
     implementation(platform(libs.compose.bom))
@@ -138,18 +147,15 @@ dependencies {
     
     // Hilt - Dependency Injection
     implementation(libs.hilt.android)
-    ksp(libs.hilt.compiler)
+    kapt(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
     
-    // Room - Local Database
-    implementation(libs.room.runtime)
-    implementation(libs.room.ktx)
-    ksp(libs.room.compiler)
+    // Room 依赖已移除 - 使用 ObjectBox 作为本地数据库
     
     // WorkManager - Background Tasks (Critical for Heartbeat Protocol)
     implementation(libs.work.runtime.ktx)
     implementation(libs.hilt.work)
-    ksp(libs.hilt.work.compiler)
+    kapt(libs.hilt.work.compiler)
     
     // Coroutines & Flow
     implementation(libs.kotlinx.coroutines.android)
@@ -175,7 +181,7 @@ dependencies {
 
     // Hilt Testing
     androidTestImplementation(libs.hilt.android.testing)
-    kspAndroidTest(libs.hilt.compiler)
+    kaptAndroidTest(libs.hilt.compiler)
 
     // MediaPipe - Edge AI Text Classification (Emotion Analysis)
     implementation("com.google.mediapipe:tasks-text:0.20230731")
@@ -183,6 +189,8 @@ dependencies {
     // ObjectBox
     implementation(libs.objectbox.android)
     implementation(libs.objectbox.kotlin)
+
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
     
     // LangChain4j dependencies removed - using Doubao via Retrofit instead
 

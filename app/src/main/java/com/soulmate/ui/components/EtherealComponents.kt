@@ -116,6 +116,8 @@ fun Modifier.pulsate(
 fun GlassBubble(
     modifier: Modifier = Modifier,
     shape: RoundedCornerShape = RoundedCornerShape(16.dp),
+    backgroundColor: Color = SoulMateTheme.colors.cardBg,
+    borderColor: Color = SoulMateTheme.colors.cardBorder,
     onClick: (() -> Unit)? = null,
     content: @Composable () -> Unit
 ) {
@@ -128,8 +130,8 @@ fun GlassBubble(
     Box(
         modifier = modifier
             .clip(shape)
-            .background(Color(0xFF1A1A2E).copy(alpha = 0.7f)) // Darker Glass
-            .border(1.dp, ChampagneGold.copy(alpha = 0.3f), shape) // Gold Border
+            .background(backgroundColor)
+            .border(1.dp, borderColor, shape)
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
     ) {
         content()

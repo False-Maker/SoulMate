@@ -27,6 +27,9 @@ import org.json.JSONObject
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 
 /**
  * AliyunASRService - 阿里云语音识别服务
@@ -151,11 +154,13 @@ class AliyunASRService @Inject constructor(
             Log.d(TAG, "Initializing NUI SDK with params: $initParams")
 
             // Initialize NUI instance
+            // 使用 WARNING 级别以减少日志输出（只显示警告和错误）
+            // 可选级别：LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_WARNING, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_VERBOSE
             val result = nuiInstance.initialize(
                 this,
                 initParams,
-                Constants.LogLevel.LOG_LEVEL_VERBOSE,
-                true // Save log
+                Constants.LogLevel.LOG_LEVEL_WARNING,  // 改为 WARNING，只显示警告和错误
+                false // 不保存日志文件，减少 I/O
             )
 
             if (result == Constants.NuiResultCode.SUCCESS) {
@@ -164,10 +169,16 @@ class AliyunASRService @Inject constructor(
                 
                 // Set recognition parameters
                 setRecognitionParams()
+                
+                // 验证 dialog 引擎是否真的创建成功
+                // 注意：这里只是标记初始化完成，实际的 dialog 创建是在 startDialog 时
+                Log.d(TAG, "Initialization completed, ready for startDialog")
                 return true
             } else {
-                Log.e(TAG, "NUI SDK initialization failed: $result")
-                _asrState.value = ASRState.Error("ASR初始化失败(代码:$result)")
+                val errorMsg = getErrorCodeMessage(result)
+                Log.e(TAG, "NUI SDK initialization failed: result=$result, message=$errorMsg")
+                _asrState.value = ASRState.Error("ASR初始化失败: $errorMsg (代码:$result)")
+                isInitialized = false
                 return false
             }
         } catch (e: Exception) {
@@ -180,36 +191,114 @@ class AliyunASRService @Inject constructor(
     /**
      * 开始语音识别
      */
-    suspend fun startRecognition(): Boolean {
+    // Silence detection variables
+    private var enableAutoStop = false
+    private var lastVoiceTime = 0L
+    private var silenceCheckJob: Job? = null
+    
+    /**
+     * 开始语音识别
+     * @param enableAutoStop 是否启用自动停止（模拟 VAD，静音 1.5s 后自动发送）
+     */
+    suspend fun startRecognition(enableAutoStop: Boolean = false): Boolean {
         if (!isInitialized) {
             Log.w(TAG, "Not initialized, initializing now...")
             if (!initialize()) {
                 _asrState.value = ASRState.Error("初始化失败")
                 return false
             }
+            
+            // 首次初始化后，等待一小段时间确保 dialog 引擎完全创建
+            Log.d(TAG, "First initialization completed, waiting for dialog engine to be ready...")
+            kotlinx.coroutines.delay(100)
         }
 
         try {
-            Log.d(TAG, "Starting recognition...")
+            Log.d(TAG, "Starting recognition... AutoStop enabled: $enableAutoStop")
+            
+            if (!isInitialized) {
+                Log.e(TAG, "SDK not initialized, cannot start dialog")
+                _asrState.value = ASRState.Error("启动识别失败: SDK 未初始化")
+                return false
+            }
+            
+            if (!checkMicrophonePermission()) {
+                Log.e(TAG, "Microphone permission not granted")
+                _asrState.value = ASRState.Error("启动识别失败: 缺少麦克风权限")
+                return false
+            }
+            
+            this.enableAutoStop = enableAutoStop
+            this.lastVoiceTime = 0L // Reset
+            
+            // Always use P2T since VAD mode was unreliable
+            Log.d(TAG, "Calling startDialog with TYPE_P2T (Manual VAD handled by app)")
             _asrState.value = ASRState.Listening
 
             val result = nuiInstance.startDialog(
                 Constants.VadMode.TYPE_P2T,
                 "{}"
             )
+            
+            Log.d(TAG, "startDialog returned: result=$result")
 
             if (result != Constants.NuiResultCode.SUCCESS) {
-                Log.e(TAG, "Failed to start dialog: $result")
-                _asrState.value = ASRState.Error("启动识别失败")
-                return false
+                val errorMsg = getErrorCodeMessage(result)
+                Log.e(TAG, "Failed to start dialog: result=$result, message=$errorMsg")
+                
+                if (result == 240007) {
+                    Log.w(TAG, "Dialog not created (240007), retrying after short delay...")
+                    kotlinx.coroutines.delay(200)
+                    
+                    val retryResult = nuiInstance.startDialog(
+                        Constants.VadMode.TYPE_P2T,
+                        "{}"
+                    )
+                    
+                    if (retryResult == Constants.NuiResultCode.SUCCESS) {
+                        Log.i(TAG, "Retry successful, recognition started")
+                        startSilenceWatchdog() // Start watchdog if success
+                        return true
+                    } else {
+                        Log.e(TAG, "Retry also failed: result=$retryResult")
+                        _asrState.value = ASRState.Error("启动识别失败: $errorMsg (错误码: $result)，重试后仍失败")
+                        return false
+                    }
+                } else {
+                    _asrState.value = ASRState.Error("启动识别失败: $errorMsg (错误码: $result)")
+                    return false
+                }
             }
 
             Log.i(TAG, "Recognition started successfully")
+            startSilenceWatchdog() // Start watchdog
             return true
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Security exception when starting recognition", e)
+            _asrState.value = ASRState.Error("启动识别失败: 缺少麦克风权限")
+            return false
         } catch (e: Exception) {
             Log.e(TAG, "Failed to start recognition", e)
             _asrState.value = ASRState.Error("启动识别异常: ${e.message}")
             return false
+        }
+    }
+    
+    private fun startSilenceWatchdog() {
+        if (!enableAutoStop) return
+        
+        silenceCheckJob?.cancel()
+        silenceCheckJob = serviceScope.launch {
+            Log.d(TAG, "Silence watchdog started")
+            while (isActive && isRecording) { // Only run while recording
+                delay(200) // Check every 200ms
+                
+                if (lastVoiceTime > 0 && System.currentTimeMillis() - lastVoiceTime > 1500) {
+                     Log.i(TAG, "Silence detected (>1.5s), stopping recognition automatically")
+                     stopRecognition()
+                     break
+                }
+            }
         }
     }
 
@@ -219,6 +308,7 @@ class AliyunASRService @Inject constructor(
      */
     fun stopRecognition() {
         Log.d(TAG, "Stopping recognition... lastPartialResult='$lastPartialResult'")
+        silenceCheckJob?.cancel() // Stop watchdog
         _asrState.value = ASRState.Recognizing
         
         // 保存当前的 partial result，因为 SDK 事件可能不会触发
@@ -260,6 +350,7 @@ class AliyunASRService @Inject constructor(
         Log.d(TAG, "Cancelling recognition...")
         _asrState.value = ASRState.Idle
         stopAudioRecording()
+        silenceCheckJob?.cancel()
         
         try {
             nuiInstance.cancelDialog()
@@ -305,6 +396,10 @@ class AliyunASRService @Inject constructor(
                         Log.d(TAG, "Partial result: $text")
                         // 保存最后的部分识别结果
                         lastPartialResult = text
+                        
+                        // Update silence detection timer
+                        lastVoiceTime = System.currentTimeMillis()
+                        
                         serviceScope.launch {
                             _partialResult.emit(text)
                         }
@@ -654,6 +749,69 @@ class AliyunASRService @Inject constructor(
             Log.d(TAG, "Copied asset $assetName to $destPath")
         } catch (e: IOException) {
             Log.w(TAG, "Asset file not found: $assetName")
+        }
+    }
+    
+    /**
+     * 检查麦克风权限
+     */
+    private fun checkMicrophonePermission(): Boolean {
+        return try {
+            android.content.pm.PackageManager.PERMISSION_GRANTED ==
+                context.checkSelfPermission(android.Manifest.permission.RECORD_AUDIO)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to check microphone permission", e)
+            false
+        }
+    }
+    
+    /**
+     * 将错误码转换为可读的错误信息
+     * 基于阿里云 NUI SDK 的错误码定义
+     */
+    private fun getErrorCodeMessage(errorCode: Int): String {
+        return when (errorCode) {
+            // 通用错误码
+            140001 -> "引擎未创建，请检查是否成功初始化"
+            140008 -> "鉴权失败，请检查 token 和 app_key"
+            140011 -> "方法调用不符合当前状态"
+            140013 -> "方法调用不符合当前状态（未初始化）"
+            
+            // Token 相关
+            144003 -> "Token 过期或无效，请重新获取"
+            240068 -> "403 Forbidden，Token 无效或过期"
+            170807 -> "SecurityToken 过期或无效"
+            
+            // 初始化相关
+            240005 -> "初始化参数无效，请检查 app_key、token、url 等参数"
+            240006 -> "未设置回调监听器"
+            240007 -> "Dialog 未创建，请确保 SDK 已正确初始化"
+            240008 -> "SDK 内部核心引擎未成功初始化"
+            240011 -> "SDK 未成功初始化"
+            240040 -> "本地引擎初始化失败，资源文件可能损坏"
+            
+            // 网络相关
+            240063 -> "SSL 错误，可能为 SSL 建连失败或 token 无效"
+            240070 -> "鉴权失败，请查看日志确定具体问题"
+            
+            // 音频相关
+            240052 -> "2秒未传入音频数据，请检查录音权限或录音模块是否被占用"
+            41010105 -> "长时间未收到人声，触发静音超时"
+            
+            // 参数相关
+            240002 -> "设置的参数不正确，请检查 JSON 参数格式"
+            144103 -> "设置参数无效，请参考接口文档检查参数"
+            
+            // 服务相关
+            40000004 -> "长时间未收到指令或音频"
+            40000010 -> "账号试用期已过，请开通商用版或检查账号权限"
+            10000016 -> "未成功连接服务，请检查参数及服务地址"
+            
+            // 其他
+            999999 -> "库加载失败，可能是库不支持当前架构或库加载时崩溃"
+            
+            // 默认情况
+            else -> "未知错误"
         }
     }
 }

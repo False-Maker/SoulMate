@@ -60,6 +60,8 @@ object EmotionGestureParser {
             // 移除情绪和动作标签
             .replace(emotionPattern, "")
             .replace(gesturePattern, "")
+            // 移除惩罚/机制标签
+            .replace(Regex("""\[DEDUCT]""", RegexOption.IGNORE_CASE), "")
             // 移除纪念日标签 [ANNIVERSARY:...]
             .replace(Regex("""\[ANNIVERSARY:.*?]"""), "")
             .trim()

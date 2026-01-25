@@ -3,7 +3,11 @@ package com.soulmate.data.service
 import android.content.Context
 import android.util.Log
 import com.soulmate.core.data.memory.MemoryRepository
+import com.soulmate.data.model.EmotionRecordEntity
+import com.soulmate.data.model.EmotionRecordEntity_
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.objectbox.BoxStore
+import io.objectbox.kotlin.boxFor
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,11 +24,13 @@ import javax.inject.Singleton
  * 3. 危机熔断 - 检测到危机信号时触发干预
  * 
  * 这是一个商业化功能，用于家长/监护人监测被关护者的心理健康状态。
+ * Update: 使用 ObjectBox 持久化存储情绪数据
  */
 @Singleton
 class MindWatchService @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val memoryRepository: MemoryRepository
+    private val memoryRepository: MemoryRepository,
+    private val boxStore: BoxStore
 ) {
     
     companion object {
@@ -40,7 +46,9 @@ class MindWatchService @Inject constructor(
         private val WARNING_KEYWORDS = setOf(
             "抑郁", "绝望", "没意思", "活着累", "讨厌自己", "没人爱我",
             "孤独", "害怕", "焦虑", "失眠", "噩梦",
-            "depressed", "hopeless", "lonely", "anxiety", "nightmare"
+            "心情不好", "心情差", "不开心", "难过", "沮丧",
+            "depressed", "hopeless", "lonely", "anxiety", "nightmare",
+            "sad", "unhappy", "upset", "down"
         )
         
         // 正面关键词（情绪改善信号）
@@ -68,7 +76,7 @@ class MindWatchService @Inject constructor(
     }
     
     /**
-     * 情绪数据点
+     * 情绪数据点 (DTO for UI/Reports)
      */
     data class EmotionDataPoint(
         val timestamp: Long,
@@ -89,15 +97,20 @@ class MindWatchService @Inject constructor(
         val recommendation: String
     )
     
+    // ObjectBox Box
+    private val emotionBox = boxStore.boxFor(EmotionRecordEntity::class)
+    
     // 当前监测状态
     private val _currentStatus = MutableStateFlow(WatchStatus.NORMAL)
     val currentStatus: StateFlow<WatchStatus> = _currentStatus.asStateFlow()
     
-    // 情绪历史记录
-    private val emotionHistory = mutableListOf<EmotionDataPoint>()
-    
     // 是否启用监测
-    private var isEnabled = false
+    private var isEnabled = true // 默认启用，或者从配置读取
+    
+    init {
+        // 初始化时根据历史数据计算状态
+        recalculateStatus()
+    }
     
     /**
      * 启用 MindWatch 监测
@@ -134,30 +147,26 @@ class MindWatchService @Inject constructor(
         // 计算情绪分数
         val score = calculateScore(foundCrisis.size, foundWarning.size, foundPositive.size)
         
-        // 记录数据点
-        val dataPoint = EmotionDataPoint(
-            timestamp = System.currentTimeMillis(),
-            score = score,
-            emotion = emotion,
-            keywords = foundCrisis + foundWarning + foundPositive
-        )
-        emotionHistory.add(dataPoint)
+        // 下面这段逻辑避免全是0分的记录充斥数据库，但为了画图连贯性，建议还是记录
+        // 或者只记录有意义的变化/有关键词/有情绪的情况
+        // 这里策略：只要有 emotion 标签或者有关键词 或者分数不为0 就记录
+        if (score != 0 || !emotion.isNullOrBlank() || foundCrisis.isNotEmpty() || foundWarning.isNotEmpty()) {
+            val entity = EmotionRecordEntity(
+                timestamp = System.currentTimeMillis(),
+                score = score,
+                emotionLabel = emotion,
+                keywords = (foundCrisis + foundWarning + foundPositive).joinToString(",")
+            )
+            emotionBox.put(entity)
+        }
         
-        // 保持最近 100 条记录
-        if (emotionHistory.size > 100) {
-            emotionHistory.removeAt(0)
+        // 简单日志
+        if (foundCrisis.isNotEmpty()) {
+            Log.w(TAG, "CRISIS keywords detected: $foundCrisis")
         }
         
         // 更新状态
         updateStatus(foundCrisis.isNotEmpty(), foundWarning.isNotEmpty())
-        
-        // 记录日志
-        if (foundCrisis.isNotEmpty()) {
-            Log.w(TAG, "CRISIS keywords detected: $foundCrisis")
-        }
-        if (foundWarning.isNotEmpty()) {
-            Log.d(TAG, "Warning keywords detected: $foundWarning")
-        }
         
         return foundCrisis.isNotEmpty()
     }
@@ -166,35 +175,46 @@ class MindWatchService @Inject constructor(
      * 计算情绪分数
      */
     private fun calculateScore(crisisCount: Int, warningCount: Int, positiveCount: Int): Int {
-        return crisisCount * CRISIS_SCORE + 
-               warningCount * WARNING_SCORE + 
-               positiveCount * POSITIVE_SCORE
+        // 限制分数范围在 -10 到 10
+        val rawScore = crisisCount * CRISIS_SCORE + 
+                       warningCount * WARNING_SCORE + 
+                       positiveCount * POSITIVE_SCORE
+        return rawScore.coerceIn(-10, 10)
     }
     
     /**
-     * 更新监测状态
+     * 更新监测状态 (基于数据库最近记录)
      */
     private fun updateStatus(hasCrisis: Boolean, hasWarning: Boolean) {
+        if (hasCrisis) {
+            _currentStatus.value = WatchStatus.CRISIS
+            return
+        }
+        
+        // 获取最近记录重新计算
+        recalculateStatus()
+    }
+    
+    private fun recalculateStatus() {
+        // 查询最近 10 条记录
+        val recentRecords = emotionBox.query()
+            .orderDesc(EmotionRecordEntity_.timestamp)
+            .build()
+            .find(0, 10)
+        
+        if (recentRecords.isEmpty()) {
+            _currentStatus.value = WatchStatus.NORMAL
+            return
+        }
+        
+        val recentAvg = recentRecords.map { it.score }.average()
+        val recentWarnings = recentRecords.take(5).count { it.score <= WARNING_SCORE }
+        
         val newStatus = when {
-            hasCrisis -> WatchStatus.CRISIS
-            hasWarning -> {
-                // 检查最近是否连续有警告
-                val recentWarnings = emotionHistory.takeLast(5).count { it.score < -5 }
-                if (recentWarnings >= 3) WatchStatus.WARNING else WatchStatus.CAUTION
-            }
-            else -> {
-                // 根据近期趋势判断
-                val recentAvg = emotionHistory.takeLast(10)
-                    .map { it.score }
-                    .average()
-                    .takeIf { !it.isNaN() } ?: 0.0
-                    
-                when {
-                    recentAvg < -5 -> WatchStatus.WARNING
-                    recentAvg < -2 -> WatchStatus.CAUTION
-                    else -> WatchStatus.NORMAL
-                }
-            }
+            recentWarnings >= 3 -> WatchStatus.WARNING
+            recentAvg < -5 -> WatchStatus.WARNING
+            recentAvg < -2 -> WatchStatus.CAUTION
+            else -> WatchStatus.NORMAL
         }
         
         if (_currentStatus.value != newStatus) {
@@ -208,7 +228,22 @@ class MindWatchService @Inject constructor(
      */
     fun generateReport(days: Int = 7): WatchReport {
         val cutoffTime = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(days.toLong())
-        val recentData = emotionHistory.filter { it.timestamp >= cutoffTime }
+        
+        // 查询时间范围内的记录
+        val recentDataEntities = emotionBox.query(EmotionRecordEntity_.timestamp.greater(cutoffTime))
+            .order(EmotionRecordEntity_.timestamp)
+            .build()
+            .find()
+            
+        // 转换为 DTO
+        val recentData = recentDataEntities.map { entity ->
+            EmotionDataPoint(
+                timestamp = entity.timestamp,
+                score = entity.score,
+                emotion = entity.emotionLabel,
+                keywords = entity.getKeywordList()
+            )
+        }
         
         val crisisKeywords = recentData.flatMap { it.keywords }
             .filter { it.lowercase() in CRISIS_KEYWORDS.map { k -> k.lowercase() } }
@@ -264,10 +299,16 @@ class MindWatchService @Inject constructor(
     fun getEmotionTrend(days: Int = 7): List<Pair<Long, Float>> {
         val cutoffTime = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(days.toLong())
         
-        return emotionHistory
-            .filter { it.timestamp >= cutoffTime }
+        val records = emotionBox.query(EmotionRecordEntity_.timestamp.greater(cutoffTime))
+            .order(EmotionRecordEntity_.timestamp)
+            .build()
+            .find()
+            
+        return records
             .groupBy { 
-                // 按天分组
+                // 按相关时间点聚合，这里按小时或者按天，根据 UI 需求
+                // 为了画曲线平滑，建议按 "每次对话" 或者 "每小时"
+                // 这里按天聚合防止点太多
                 it.timestamp / TimeUnit.DAYS.toMillis(1)
             }
             .map { (day, points) ->
@@ -281,8 +322,18 @@ class MindWatchService @Inject constructor(
      * 清除历史数据
      */
     fun clearHistory() {
-        emotionHistory.clear()
+        emotionBox.removeAll()
         _currentStatus.value = WatchStatus.NORMAL
         Log.d(TAG, "History cleared")
+    }
+    
+    /**
+     * 获取最近的记录（供调试或首页显示）
+     */
+    fun getRecentRecords(limit: Int = 20): List<EmotionRecordEntity> {
+        return emotionBox.query()
+            .orderDesc(EmotionRecordEntity_.timestamp)
+            .build()
+            .find(0, limit.toLong())
     }
 }

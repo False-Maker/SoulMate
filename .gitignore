@@ -89,8 +89,5 @@ Thumbs.db
 *.tar.gz
 *.zip
 app/libs/*.tar.gz
-app/libs/*.zip
-
-# Gradle wrapper (if too large, use Git LFS or download separately)
+app/libs/*.zip# Gradle wrapper (if too large, use Git LFS or download separately)
 # gradle/wrapper/gradle-*.zip
-

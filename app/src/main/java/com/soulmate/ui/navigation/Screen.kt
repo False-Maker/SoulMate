@@ -26,5 +26,14 @@ sealed class Screen(val route: String) {
     
     /** 数字人互动屏幕 */
     object DigitalHuman : Screen("digital_human")
+
+    /** 沉浸式融合屏幕 (New Main Interaction Hub) */
+    object Fusion : Screen("fusion")
+
+    /** 情绪健康报告 */
+    object EmotionalReport : Screen("emotional_report")
+
+    /** 危机干预资源 */
+    object CrisisResources : Screen("crisis_resources")
 }
 

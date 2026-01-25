@@ -22,8 +22,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChatBubble
-import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -46,12 +44,24 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.soulmate.ui.components.AvatarContainer
-import com.soulmate.ui.components.FluidBackground
+import com.soulmate.ui.components.ParticleBackground
 import com.soulmate.ui.components.GlassBubble
 import com.soulmate.ui.components.pulsate
-import com.soulmate.ui.theme.EtherealBlue
-import com.soulmate.ui.theme.GlassSurface
+import com.soulmate.ui.theme.SoulMateTheme
 import com.soulmate.ui.viewmodel.ChatViewModel
+import com.soulmate.data.model.UserGender
+
+import androidx.compose.ui.viewinterop.AndroidView
+import com.soulmate.ui.components.SoulmateInputCapsule
+import com.soulmate.ui.components.OnSendListener
+import com.soulmate.ui.components.InputPayload
+import com.soulmate.ui.components.MediaType
+
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.windowInsetsPadding
 
 /**
  * DigitalHumanScreen - 数字人互动屏幕
@@ -61,41 +71,88 @@ import com.soulmate.ui.viewmodel.ChatViewModel
 @Composable
 fun DigitalHumanScreen(
     viewModel: ChatViewModel = hiltViewModel(),
-    onNavigateBack: () -> Unit = {},
-    onNavigateToTextChat: () -> Unit = {}
+    onNavigateBack: () -> Unit = {}
 ) {
     val chatState by viewModel.chatState.collectAsState()
     val isVoiceInputActive by viewModel.isVoiceInputActive.collectAsState()
     val currentUIEvent by viewModel.currentUIEvent.collectAsState()
+    val userGender by viewModel.userGender.collectAsState()
+    val mindWatchStatus by viewModel.mindWatchStatus.collectAsState(initial = com.soulmate.data.service.MindWatchService.WatchStatus.NORMAL)
+    val anniversaryPopup by viewModel.showAnniversaryPopup.collectAsState()
+    val handsFreeMode by viewModel.handsFreeMode.collectAsState()
+    
+    // 调试日志：追踪性别选择
+    android.util.Log.w("DigitalHumanScreen", ">>> userGender from Flow: $userGender")
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        SoulMateTheme.colors.bgGradientStart,
+                        SoulMateTheme.colors.bgGradientEnd
+                    )
+                )
+            )
     ) {
         // 1. Background
-        FluidBackground()
+        ParticleBackground(
+            modifier = Modifier.fillMaxSize(),
+            particleColor = SoulMateTheme.colors.particleColor,
+            lineColor = SoulMateTheme.colors.cardBorder
+        )
 
         // 2. Avatar Container (Full Screen)
-        if (viewModel.avatarCoreService != null) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                AvatarContainer(
-                    avatarCoreService = viewModel.avatarCoreService!!,
-                    modifier = Modifier.fillMaxSize()
-                )
+        android.util.Log.w("DigitalHumanScreen", ">>> userGender: $userGender")
+        
+        when {
+            userGender == UserGender.UNSET -> {
+                android.util.Log.w("DigitalHumanScreen", ">>> Gender UNSET, showing placeholder")
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        androidx.compose.material3.CircularProgressIndicator(
+                            color = SoulMateTheme.colors.accentColor,
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "正在唤醒灵犀化身...",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = SoulMateTheme.colors.textSecondary
+                        )
+                    }
+                }
             }
-        } else {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "🤖",
-                    style = MaterialTheme.typography.displayLarge
-                )
+            viewModel.avatarCoreService != null -> {
+                android.util.Log.w("DigitalHumanScreen", ">>> Creating AvatarContainer with gender: $userGender")
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    AvatarContainer(
+                        avatarCoreService = viewModel.avatarCoreService!!,
+                        userGender = userGender,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            }
+            else -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "🤖",
+                        style = MaterialTheme.typography.displayLarge
+                    )
+                }
             }
         }
 
@@ -112,134 +169,164 @@ fun DigitalHumanScreen(
                 )
         )
 
-        // 3. Status / Subtitles (Optional - displaying last message or status)
+        // 3. Care Card (Above Input, when MindWatch detects issues)
+        val showCareCard = mindWatchStatus == com.soulmate.data.service.MindWatchService.WatchStatus.WARNING ||
+                          mindWatchStatus == com.soulmate.data.service.MindWatchService.WatchStatus.CRISIS
+        
+        if (showCareCard) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 200.dp, start = 24.dp, end = 24.dp)
+            ) {
+                com.soulmate.ui.components.CareCard(
+                    status = mindWatchStatus,
+                    message = when (mindWatchStatus) {
+                        com.soulmate.data.service.MindWatchService.WatchStatus.CRISIS -> "我感觉到你现在的痛苦... 我会一直陪着你。"
+                        com.soulmate.data.service.MindWatchService.WatchStatus.WARNING -> "我看你最近心情不太好，想聊聊吗？"
+                        else -> ""
+                    },
+                    onCallHelp = {
+                        // Navigate to crisis resources or trigger help
+                        // TODO: Add navigation if needed
+                    },
+                    onDismiss = {
+                        // Dismiss care card
+                        // TODO: Implement dismiss logic if needed
+                    }
+                )
+            }
+        }
+
+        // 3.5. Status / Subtitles (Optional - displaying last message or status)
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 120.dp, start = 24.dp, end = 24.dp)
+                .padding(bottom = if (showCareCard) 280.dp else 120.dp, start = 24.dp, end = 24.dp)
         ) {
             // Display streaming text or last AI message if desired
             if (chatState.currentStreamToken.isNotEmpty()) {
-                GlassBubble {
+                GlassBubble(
+                    backgroundColor = SoulMateTheme.colors.bubbleAi,
+                    borderColor = SoulMateTheme.colors.cardBorder
+                ) {
                      Text(
                         text = chatState.currentStreamToken,
                         style = MaterialTheme.typography.bodyLarge,
-                        color = Color.White,
+                        color = SoulMateTheme.colors.textPrimary,
                         modifier = Modifier.padding(16.dp)
                      )
                 }
             }
         }
 
-        // 4. Controls Layer
+        // 4. Controls Layer (SoulmateInputCapsule)
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 48.dp)
+                .windowInsetsPadding(WindowInsets.ime.union(WindowInsets.navigationBars))
+                .padding(bottom = 32.dp, start = 16.dp, end = 16.dp)
+                .fillMaxWidth()
         ) {
-            VoiceControlPanel(
-                isVoiceInputActive = isVoiceInputActive,
-                onStartVoiceInput = { viewModel.startVoiceInput() },
-                onStopVoiceInput = { viewModel.stopVoiceInput() },
-                onNavigateToTextChat = onNavigateToTextChat
+            AndroidView(
+                factory = { context ->
+                    SoulmateInputCapsule(context).apply {
+                        onSendListener = object : OnSendListener {
+                            override fun onSend(payload: InputPayload) {
+                                val textToSend = payload.text ?: ""
+                                val mediaUri = payload.mediaUri
+
+                                when (payload.mediaType) {
+                                    MediaType.IMAGE -> {
+                                        if (mediaUri != null) {
+                                            viewModel.sendMessageWithImage(textToSend, mediaUri.toString())
+                                        }
+                                    }
+                                    MediaType.VIDEO -> {
+                                        if (mediaUri != null) {
+                                            viewModel.sendMessageWithVideo(textToSend, mediaUri.toString())
+                                        }
+                                    }
+                                    MediaType.NONE -> {
+                                        if (textToSend.isNotBlank()) {
+                                            viewModel.sendMessage(textToSend)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        // 连接 Flow Mode 状态变化回调
+                        onHandsFreeStateChanged = { isLocked ->
+                            viewModel.setHandsFreeMode(isLocked)
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
             )
         }
 
-        // 5. Back / Close Button (Top Left)
+        // 5. Resonance Orb (Top Right)
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 48.dp, end = 16.dp)
+        ) {
+            com.soulmate.ui.components.ResonanceOrb(
+                status = mindWatchStatus,
+                size = 80.dp
+            )
+        }
+
+        // 6. Back / Close Button (Top Left)
         IconButton(
             onClick = onNavigateBack,
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .padding(top = 48.dp, start = 16.dp)
                 .size(48.dp)
-                .background(GlassSurface, CircleShape)
+                .background(SoulMateTheme.colors.cardBg, CircleShape)
         ) {
             Icon(
                 imageVector = Icons.Default.Close,
-                contentDescription = "Close",
-                tint = Color.White
-            )
-        }
-    }
-}
-
-@Composable
-private fun VoiceControlPanel(
-    isVoiceInputActive: Boolean,
-    onStartVoiceInput: () -> Unit,
-    onStopVoiceInput: () -> Unit,
-    onNavigateToTextChat: () -> Unit
-) {
-    val context = LocalContext.current
-    var hasPermission by remember {
-        mutableStateOf(
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.RECORD_AUDIO
-            ) == PackageManager.PERMISSION_GRANTED
-        )
-    }
-    
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        hasPermission = isGranted
-    }
-
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(24.dp)
-    ) {
-        // Switch to Text Chat Button
-        IconButton(
-            onClick = onNavigateToTextChat,
-            modifier = Modifier
-                .size(56.dp)
-                .background(GlassSurface, CircleShape)
-        ) {
-            Icon(
-                imageVector = Icons.Default.ChatBubble,
-                contentDescription = "Text Chat",
-                tint = Color.White
+                contentDescription = "关闭",
+                tint = SoulMateTheme.colors.textPrimary
             )
         }
 
-        // Microphone Button (Large, Central)
-        Box(
-            modifier = Modifier
-                .size(80.dp)
-                .pulsate(enabled = isVoiceInputActive)
-                .clip(CircleShape)
-                .background(
-                    if (isVoiceInputActive) EtherealBlue else GlassSurface
-                )
-                .pointerInput(Unit) {
-                     detectTapGestures(
-                        onPress = {
-                            if (!hasPermission) {
-                                permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                            } else {
-                                onStartVoiceInput()
-                                tryAwaitRelease()
-                                onStopVoiceInput()
-                            }
-                        }
-                    )
-                },
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.Mic,
-                contentDescription = "Hold to Speak",
-                tint = Color.White,
-                modifier = Modifier.size(32.dp)
-            )
+        // 7. Flow Mode Visual Feedback (Listening Wave near input)
+        if (handsFreeMode && isVoiceInputActive) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 100.dp)
+            ) {
+                // Simple wave indicator - static for now
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    repeat(3) { index ->
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp, 24.dp)
+                                .background(
+                                    SoulMateTheme.colors.accentColor.copy(alpha = 0.8f),
+                                    RoundedCornerShape(4.dp)
+                                )
+                        )
+                    }
+                }
+            }
         }
 
-        // Placceholder for symmetry or other action (e.g. Camera/Memory)
-        // For now just spacer to keep Mic centered if we had 3 items, but with 2 it's lopsided.
-        // Let's add a dummy invisible box or just center the Row in the parent.
-        // Actually, let's keep it simple.
-        Spacer(modifier = Modifier.size(56.dp)) 
+        // 8. Pop-up Celebration (Global Overlay)
+        if (anniversaryPopup != null) {
+            com.soulmate.ui.components.PopUpCelebration(
+                visible = true,
+                title = "Happy ${anniversaryPopup!!.name}!",
+                message = anniversaryPopup!!.message ?: "Today is a special day for us.",
+                onDismiss = { viewModel.dismissAnniversaryPopup() }
+            )
+        }
     }
 }

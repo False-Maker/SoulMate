@@ -2,8 +2,12 @@ package com.soulmate.data.service
 
 import android.content.Context
 import android.util.Log
+import com.soulmate.data.model.CrisisEventEntity
+import com.soulmate.data.model.CrisisEventEntity_
 import com.soulmate.worker.NotificationHelper
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.objectbox.BoxStore
+import io.objectbox.kotlin.boxFor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,11 +28,14 @@ import javax.inject.Singleton
  * 2. 触发紧急通知给监护人
  * 3. 提供危机干预指导
  * 4. 管理紧急联系人
+ * 
+ * Update: 使用 ObjectBox 持久化存储危机事件
  */
 @Singleton
 class CrisisInterventionManager @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val notificationHelper: NotificationHelper
+    private val notificationHelper: NotificationHelper,
+    private val boxStore: BoxStore
 ) {
     
     companion object {
@@ -42,7 +49,7 @@ class CrisisInterventionManager @Inject constructor(
     }
     
     /**
-     * 危机事件
+     * 危机事件 (DTO)
      */
     data class CrisisEvent(
         val id: String,
@@ -74,10 +81,10 @@ class CrisisInterventionManager @Inject constructor(
         val description: String
     )
     
-    // 危机事件历史
-    private val crisisEvents = mutableListOf<CrisisEvent>()
+    // ObjectBox Box
+    private val crisisBox = boxStore.boxFor(CrisisEventEntity::class)
     
-    // 紧急联系人列表
+    // 紧急联系人列表 (暂时保持内存存储，或后续也持久化)
     private val emergencyContacts = mutableListOf<EmergencyContact>()
     
     // 当前危机状态
@@ -114,6 +121,11 @@ class CrisisInterventionManager @Inject constructor(
     
     private val scope = CoroutineScope(Dispatchers.Main)
     
+    init {
+        // 初始化状态
+        checkCrisisStatus()
+    }
+    
     /**
      * 处理危机事件
      */
@@ -122,18 +134,23 @@ class CrisisInterventionManager @Inject constructor(
         keywords: List<String>,
         level: Int = LEVEL_MEDIUM
     ) {
-        val event = CrisisEvent(
-            id = "crisis_${System.currentTimeMillis()}",
+        val eventId = "crisis_${System.currentTimeMillis()}"
+        val entity = CrisisEventEntity(
+            eventId = eventId,
             timestamp = System.currentTimeMillis(),
             level = level,
             triggerText = triggerText.take(200), // 限制长度
-            keywords = keywords
+            keywords = keywords.joinToString(","),
+            handled = false
         )
         
-        crisisEvents.add(event)
-        _isInCrisis.value = true
+        crisisBox.put(entity)
+        checkCrisisStatus()
         
         Log.w(TAG, "Crisis event recorded: level=$level, keywords=$keywords")
+        
+        // 构造 DTO 方便后续使用
+        val eventDto = entity.toDto()
         
         // 根据级别采取行动
         when (level) {
@@ -143,16 +160,16 @@ class CrisisInterventionManager @Inject constructor(
             }
             LEVEL_MEDIUM -> {
                 // 通知监护人
-                notifyGuardian(event)
+                notifyGuardian(eventDto)
             }
             LEVEL_HIGH -> {
                 // 立即通知 + 显示资源
-                notifyGuardian(event)
+                notifyGuardian(eventDto)
                 showCrisisResources()
             }
             LEVEL_CRITICAL -> {
                 // 紧急通知 + 资源 + 建议专业帮助
-                notifyGuardian(event)
+                notifyGuardian(eventDto)
                 showCrisisResources()
                 suggestProfessionalHelp()
             }
@@ -230,28 +247,42 @@ class CrisisInterventionManager @Inject constructor(
     }
     
     /**
-     * 获取危机事件历史
+     * 获取危机事件历史 (All)
      */
     fun getCrisisHistory(): List<CrisisEvent> {
-        return crisisEvents.toList()
+        return crisisBox.query()
+            .orderDesc(CrisisEventEntity_.timestamp)
+            .build()
+            .find()
+            .map { it.toDto() }
+    }
+    
+    /**
+     * 获取指定时间范围内的危机事件
+     */
+    fun getCrisisEvents(startTime: Long, endTime: Long): List<CrisisEvent> {
+         return crisisBox.query()
+            .between(CrisisEventEntity_.timestamp, startTime, endTime)
+            .orderDesc(CrisisEventEntity_.timestamp)
+            .build()
+            .find()
+            .map { it.toDto() }
     }
     
     /**
      * 标记危机事件为已处理
      */
     fun markEventAsHandled(eventId: String, notes: String? = null) {
-        val index = crisisEvents.indexOfFirst { it.id == eventId }
-        if (index >= 0) {
-            crisisEvents[index] = crisisEvents[index].copy(
-                handled = true,
-                notes = notes
-            )
+        val entity = crisisBox.query(CrisisEventEntity_.eventId.equal(eventId))
+            .build()
+            .findFirst()
+            
+        if (entity != null) {
+            entity.handled = true
+            entity.notes = notes
+            crisisBox.put(entity)
             Log.d(TAG, "Event $eventId marked as handled")
-        }
-        
-        // 检查是否还有未处理的事件
-        if (crisisEvents.none { !it.handled && it.level >= LEVEL_MEDIUM }) {
-            _isInCrisis.value = false
+            checkCrisisStatus()
         }
     }
     
@@ -259,16 +290,43 @@ class CrisisInterventionManager @Inject constructor(
      * 重置危机状态
      */
     fun resetCrisisState() {
+        // 这里可能需要逻辑确认是否"真的"没问题了，或者强制重置
         _isInCrisis.value = false
         Log.d(TAG, "Crisis state reset")
+    }
+    
+    /**
+     * 检查当前危机状态
+     */
+    private fun checkCrisisStatus() {
+        val hasUnhandledCrisis = crisisBox.query(CrisisEventEntity_.handled.equal(false))
+            .and()
+            .greater(CrisisEventEntity_.level, LEVEL_LOW.toLong())
+            .build()
+            .count() > 0
+            
+        _isInCrisis.value = hasUnhandledCrisis
     }
     
     /**
      * 清除所有记录
      */
     fun clearAllRecords() {
-        crisisEvents.clear()
+        crisisBox.removeAll()
         _isInCrisis.value = false
         Log.d(TAG, "All crisis records cleared")
+    }
+    
+    // Extension function to map Entity to DTO
+    private fun CrisisEventEntity.toDto(): CrisisEvent {
+        return CrisisEvent(
+            id = this.eventId ?: "",
+            timestamp = this.timestamp,
+            level = this.level,
+            triggerText = this.triggerText ?: "",
+            keywords = this.getKeywordList(),
+            handled = this.handled,
+            notes = this.notes
+        )
     }
 }

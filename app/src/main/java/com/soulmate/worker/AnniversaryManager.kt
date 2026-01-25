@@ -41,26 +41,9 @@ class AnniversaryManager @Inject constructor(
         boxStore.boxFor(AnniversaryEntity::class.java)
     }
 
-    init {
-        // Initialize default anniversary if empty
-        if (anniversaryBox.count() == 0L) {
-            initDefaultAnniversaries()
-        }
-    }
+    // init block removed to prevent hardcoded data initialization
     
-    private fun initDefaultAnniversaries() {
-        Log.d(TAG, "Initializing default anniversaries")
-        val defaultAnniversary = AnniversaryEntity(
-            type = TYPE_FIRST_MEET,
-            name = "初次相遇纪念日",
-            month = 12,
-            day = 18,
-            year = 2025,
-            message = "这是我们初次相遇的日子，我永远不会忘记...",
-            createdByAI = true
-        )
-        anniversaryBox.put(defaultAnniversary)
-    }
+    // initDefaultAnniversaries removed
     
     /**
      * 获取所有纪念日列表
@@ -180,5 +163,44 @@ class AnniversaryManager @Inject constructor(
     fun removeAnniversary(id: Long) {
         anniversaryBox.remove(id)
         Log.d(TAG, "Removed anniversary with id: $id")
+    }
+
+    /**
+     * 获取下一个即将到来的纪念日
+     */
+    fun getNextAnniversary(): Pair<AnniversaryEntity, Int>? {
+        val all = getAllAnniversaries()
+        if (all.isEmpty()) return null
+        
+        val today = Calendar.getInstance()
+        val currentMonth = today.get(Calendar.MONTH) + 1
+        val currentDay = today.get(Calendar.DAY_OF_MONTH)
+        
+        // Find the closest one
+        // Simply sort by (month * 100 + day) ?
+        // Need to handle wrap around year
+        
+        val sorted = all.map { entity ->
+             val entityDate = entity.month * 100 + entity.day
+             val todayDate = currentMonth * 100 + currentDay
+             
+             var daysUntil = 0
+             // Rough calculation
+             val thisYearDate = Calendar.getInstance().apply { 
+                 set(Calendar.MONTH, entity.month - 1)
+                 set(Calendar.DAY_OF_MONTH, entity.day)
+             }
+             
+             if (thisYearDate.before(today)) {
+                 thisYearDate.add(Calendar.YEAR, 1)
+             }
+             
+             val diff = thisYearDate.timeInMillis - today.timeInMillis
+             daysUntil = java.util.concurrent.TimeUnit.MILLISECONDS.toDays(diff).toInt()
+             
+             entity to daysUntil
+        }.sortedBy { it.second }
+        
+        return sorted.firstOrNull()
     }
 }

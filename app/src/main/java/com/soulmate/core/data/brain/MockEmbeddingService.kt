@@ -16,7 +16,8 @@ import kotlin.random.Random
 class MockEmbeddingService @Inject constructor() : EmbeddingService {
     
     companion object {
-        private const val EMBEDDING_DIMENSION = 384 // Common embedding size
+        // 与 MemoryEntity 的 HNSW 索引维度保持一致 (2048)
+        private const val EMBEDDING_DIMENSION = 2048
     }
 
     /**

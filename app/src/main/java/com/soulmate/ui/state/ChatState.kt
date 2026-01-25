@@ -10,10 +10,12 @@ package com.soulmate.ui.state
  * @param isLoading True when awaiting LLM response
  * @param currentStreamToken Current streaming token being "typed" (for typing effect)
  * @param error Error message if any operation failed, null otherwise
+ * @param warning Warning message for non-critical issues (e.g., RAG degradation), null otherwise
  */
 data class ChatState(
     val messages: List<ChatMessage> = emptyList(),
     val isLoading: Boolean = false,
     val currentStreamToken: String = "",
-    val error: String? = null
+    val error: String? = null,
+    val warning: String? = null
 )

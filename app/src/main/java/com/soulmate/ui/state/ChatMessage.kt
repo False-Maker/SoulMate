@@ -9,10 +9,14 @@ import java.util.UUID
  * @param content The text content of the message
  * @param isFromUser True if the message is from the user, false if from AI
  * @param timestamp The time when the message was created
+ * @param imageUrl Optional image URL for image messages (Phase 1 ImageGen)
+ * @param localImageUri Optional local image URI for user-sent images (Phase 1 Vision)
  */
 data class ChatMessage(
     val id: String = UUID.randomUUID().toString(),
     val content: String,
     val isFromUser: Boolean,
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    val imageUrl: String? = null,
+    val localImageUri: String? = null
 )

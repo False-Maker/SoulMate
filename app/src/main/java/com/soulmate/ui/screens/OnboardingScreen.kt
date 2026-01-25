@@ -25,12 +25,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.soulmate.data.model.UserGender
+import com.soulmate.ui.components.ParticleBackground
 import com.soulmate.ui.theme.SoulMateTheme
 import com.soulmate.ui.viewmodel.OnboardingViewModel
 
 /**
  * OnboardingScreen - 首次启动引导屏幕
- * 
+ *
  * 用户选择自己的性别，App 根据选择加载对应的数字人：
  * - 男性用户 → 女性数字人 (Eleanor)
  * - 女性用户 → 男性数字人
@@ -48,13 +49,19 @@ fun OnboardingScreen(
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFF1a1a2e),
-                        Color(0xFF16213e),
-                        Color(0xFF0f3460)
+                        SoulMateTheme.colors.bgGradientStart,
+                        SoulMateTheme.colors.bgGradientEnd
                     )
                 )
             )
     ) {
+        // 1. Background
+        ParticleBackground(
+            modifier = Modifier.fillMaxSize(),
+            particleColor = SoulMateTheme.colors.particleColor,
+            lineColor = SoulMateTheme.colors.cardBorder
+        )
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -67,7 +74,7 @@ fun OnboardingScreen(
                 text = "欢迎来到 SoulMate",
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = SoulMateTheme.colors.textPrimary
             )
             
             Spacer(modifier = Modifier.height(8.dp))
@@ -75,7 +82,7 @@ fun OnboardingScreen(
             Text(
                 text = "请选择你的性别",
                 style = MaterialTheme.typography.bodyLarge,
-                color = Color.White.copy(alpha = 0.7f)
+                color = SoulMateTheme.colors.textSecondary
             )
             
             Spacer(modifier = Modifier.height(12.dp))
@@ -83,7 +90,7 @@ fun OnboardingScreen(
             Text(
                 text = "我们将为你匹配最合适的 AI 伴侣",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.White.copy(alpha = 0.5f),
+                color = SoulMateTheme.colors.textSecondary.copy(alpha = 0.8f),
                 textAlign = TextAlign.Center
             )
             
@@ -131,14 +138,15 @@ fun OnboardingScreen(
                     .height(56.dp),
                 shape = RoundedCornerShape(28.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF6C63FF),
-                    disabledContainerColor = Color(0xFF6C63FF).copy(alpha = 0.3f)
+                    containerColor = SoulMateTheme.colors.accentColor,
+                    disabledContainerColor = SoulMateTheme.colors.accentColor.copy(alpha = 0.3f)
                 )
             ) {
                 Text(
                     text = "开始体验",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
+                    color = SoulMateTheme.colors.textPrimary
                 )
             }
         }
@@ -160,11 +168,11 @@ private fun GenderCard(
         label = "scale"
     )
     val borderColor by animateColorAsState(
-        targetValue = if (isSelected) primaryColor else Color.White.copy(alpha = 0.2f),
+        targetValue = if (isSelected) primaryColor else SoulMateTheme.colors.cardBorder,
         label = "borderColor"
     )
     val backgroundColor by animateColorAsState(
-        targetValue = if (isSelected) primaryColor.copy(alpha = 0.15f) else Color.White.copy(alpha = 0.05f),
+        targetValue = if (isSelected) primaryColor.copy(alpha = 0.15f) else SoulMateTheme.colors.cardBg,
         label = "backgroundColor"
     )
     
@@ -190,7 +198,7 @@ private fun GenderCard(
                 imageVector = icon,
                 contentDescription = label,
                 modifier = Modifier.size(64.dp),
-                tint = if (isSelected) primaryColor else Color.White.copy(alpha = 0.7f)
+                tint = if (isSelected) primaryColor else SoulMateTheme.colors.textSecondary
             )
             
             Spacer(modifier = Modifier.height(16.dp))
@@ -199,7 +207,7 @@ private fun GenderCard(
                 text = label,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = if (isSelected) primaryColor else Color.White
+                color = if (isSelected) primaryColor else SoulMateTheme.colors.textPrimary
             )
             
             Spacer(modifier = Modifier.height(8.dp))
@@ -207,7 +215,7 @@ private fun GenderCard(
             Text(
                 text = description,
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.White.copy(alpha = 0.6f),
+                color = SoulMateTheme.colors.textSecondary,
                 textAlign = TextAlign.Center,
                 lineHeight = 18.sp
             )

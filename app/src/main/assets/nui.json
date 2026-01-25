@@ -3,12 +3,12 @@
   "assets_version":"1.1.20190902",
   "nui_config":{
     "service_mode":"kModeFullCloud",
-    "log_level":"kLogLevelVerbose",
+    "log_level":"kLogLevelWarning",
     "enable_recorder_by_user":true,
     "enable_dialog":false
   },
   "nls_config":{
-    "debug_level":4,
+    "debug_level":1,
     "sr_format":"opus",
     "sample_rate":16000,
     "dns_timeout":5000,

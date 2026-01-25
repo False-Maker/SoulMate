@@ -35,6 +35,8 @@ class AffinityRepository @Inject constructor(
         private const val TAG = "AffinityRepository"
         private const val PREFS_NAME = "affinity_preferences"
         private const val KEY_AFFINITY_SCORE = "affinity_score"
+        private const val KEY_LAST_INACTIVITY_DEDUCT_AT = "last_inactivity_deduct_at"
+        private const val KEY_LAST_RECOVER_AT = "last_recover_at"
         
         /** 默认亲和度分数 */
         const val DEFAULT_SCORE = 60
@@ -50,6 +52,11 @@ class AffinityRepository @Inject constructor(
         /** 扣分值 */
         const val DEDUCT_RUDE = -5      // 粗鲁言语
         const val DEDUCT_INACTIVE = -2   // 24小时不活跃
+        const val DEDUCT_BOUNDARY = -5   // 越界骚扰
+
+        /** 频率控制 */
+        private const val INACTIVITY_DEDUCT_COOLDOWN_MS = 24 * 60 * 60 * 1000L
+        private const val RECOVER_COOLDOWN_MS = 6 * 60 * 60 * 1000L
     }
     
     /**
@@ -148,11 +155,26 @@ class AffinityRepository @Inject constructor(
         Log.d(TAG, "Deducting for rude behavior: $DEDUCT_RUDE")
         return adjustScore(DEDUCT_RUDE)
     }
+
+    /**
+     * 因越界行为扣分（如 Level1 强亲密骚扰）
+     */
+    fun deductForBoundaryCrossing(): Int {
+        Log.d(TAG, "Deducting for boundary crossing: $DEDUCT_BOUNDARY")
+        return adjustScore(DEDUCT_BOUNDARY)
+    }
     
     /**
      * 因长时间不活跃扣分
      */
     fun deductForInactivity(): Int {
+        val now = System.currentTimeMillis()
+        val lastDeductAt = prefs.getLong(KEY_LAST_INACTIVITY_DEDUCT_AT, 0L)
+        if (now - lastDeductAt < INACTIVITY_DEDUCT_COOLDOWN_MS) {
+            Log.d(TAG, "Skip inactivity deduct: cooldown active")
+            return _currentScore.value
+        }
+        prefs.edit().putLong(KEY_LAST_INACTIVITY_DEDUCT_AT, now).apply()
         Log.d(TAG, "Deducting for inactivity: $DEDUCT_INACTIVE")
         return adjustScore(DEDUCT_INACTIVE)
     }
@@ -165,6 +187,20 @@ class AffinityRepository @Inject constructor(
     fun recover(amount: Int = 3): Int {
         Log.d(TAG, "Recovering affinity: +$amount")
         return adjustScore(amount)
+    }
+
+    /**
+     * 恢复亲和度（带节流）
+     */
+    fun recoverWithCooldown(amount: Int = 3): Int {
+        val now = System.currentTimeMillis()
+        val lastRecoverAt = prefs.getLong(KEY_LAST_RECOVER_AT, 0L)
+        if (now - lastRecoverAt < RECOVER_COOLDOWN_MS) {
+            Log.d(TAG, "Skip recover: cooldown active")
+            return _currentScore.value
+        }
+        prefs.edit().putLong(KEY_LAST_RECOVER_AT, now).apply()
+        return recover(amount)
     }
     
     /**

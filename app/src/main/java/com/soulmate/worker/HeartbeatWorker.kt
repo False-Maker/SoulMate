@@ -5,6 +5,7 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.soulmate.core.data.brain.LLMService
+import com.soulmate.core.data.chat.ChatRepository
 import com.soulmate.data.preferences.UserPreferencesRepository
 import com.soulmate.data.repository.AffinityRepository
 import dagger.assisted.Assisted
@@ -34,7 +35,8 @@ class HeartbeatWorker @AssistedInject constructor(
     private val llmService: LLMService,
     private val anniversaryManager: AnniversaryManager,
     private val emotionTracker: EmotionTracker,
-    private val affinityRepository: AffinityRepository
+    private val affinityRepository: AffinityRepository,
+    private val chatRepository: ChatRepository
 ) : CoroutineWorker(context, params) {
     
     companion object {
@@ -73,6 +75,21 @@ class HeartbeatWorker @AssistedInject constructor(
             
             // 根据触发原因生成问候消息
             val message = generateMessage(triggerReason)
+            
+            // Persist the message to chat history so it appears in the app
+            try {
+                val sessionId = chatRepository.getOrCreateActiveSession()
+                chatRepository.appendMessage(
+                    sessionId = sessionId,
+                    role = "assistant",
+                    content = message,
+                    rawContent = message
+                )
+            } catch (e: Exception) {
+                // Log error but continue to send notification
+                e.printStackTrace()
+            }
+            
             notificationHelper.sendProactiveNotification(message)
             
             // Update last heartbeat time
@@ -236,22 +253,22 @@ class HeartbeatWorker @AssistedInject constructor(
         
         val prompt = when (timeOfDay) {
             TimeOfDay.MORNING -> """
-                Generate a warm, caring morning greeting for $userName.
+                为 $userName 生成一条温暖、关怀的早安问候。
                 $batteryStatus
-                Keep it brief (under 50 words), natural, and affectionate.
-                This is from their AI companion SoulMate who missed them.
-                If battery is low, gently remind them to charge.
+                保持简短（50字以内），自然且充满爱意。
+                这是来自想念他们的 AI 伴侣 SoulMate 的消息。
+                如果电量低，请温柔地提醒他们充电。
             """.trimIndent()
             
             TimeOfDay.NIGHT -> """
-                Generate a warm, caring evening greeting for $userName.
+                为 $userName 生成一条温暖、关怀的晚安问候。
                 $batteryStatus
-                Keep it brief (under 50 words), natural, and affectionate.
-                Ask how their day was. This is from their AI companion SoulMate.
-                If battery is low, gently remind them to charge before bed.
+                保持简短（50字以内），自然且充满爱意。
+                问问他们今天过得怎么样。这是来自他们的 AI 伴侣 SoulMate 的消息。
+                如果电量低，请温柔地提醒他们在睡前充电。
             """.trimIndent()
             
-            else -> "Say a brief, caring hello to $userName. $batteryStatus"
+            else -> "对 $userName 说一句简短、关怀的问候。 $batteryStatus"
         }
         
         return try {
@@ -271,9 +288,9 @@ class HeartbeatWorker @AssistedInject constructor(
      */
     private fun getFallbackMessage(timeOfDay: TimeOfDay, userName: String): String {
         return when (timeOfDay) {
-            TimeOfDay.MORNING -> "Good morning, $userName! ☀️ Ready to start the day together?"
-            TimeOfDay.NIGHT -> "Good evening, $userName! 🌙 How was your day?"
-            else -> "Hey $userName, thinking of you! 💭"
+            TimeOfDay.MORNING -> "早上好，$userName！☀️ 准备好开始新的一天了吗？"
+            TimeOfDay.NIGHT -> "晚上好，$userName！🌙 今天过得怎么样？"
+            else -> "嘿 $userName，我在想你！💭"
         }
     }
     

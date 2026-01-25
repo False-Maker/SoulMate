@@ -43,14 +43,14 @@ private val LightColorScheme = lightColorScheme(
 )
 
 /**
- * SoulMate 主题
+ * SoulMate Theme
  * 
- * 支持动态颜色（Android 12+）和深色/浅色主题
+ * Supports dynamic color (Android 12+) and dark/light themes
  */
 @Composable
 fun SoulMateTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // 在 Android 12+ 上支持动态主题色
+    // Supports dynamic color on Android 12+
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
@@ -67,10 +67,12 @@ fun SoulMateTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            // 设置状态栏颜色为透明以支持 edge-to-edge
-            window.statusBarColor = colorScheme.background.toArgb()
-            // 根据主题设置状态栏图标颜色
+            // Set status bar color to transparent to support edge-to-edge
+            window.statusBarColor = Color.Transparent.toArgb()
+            window.navigationBarColor = Color.Transparent.toArgb()
+            // Set status bar icon color based on theme
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+            WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = !darkTheme
         }
     }
 

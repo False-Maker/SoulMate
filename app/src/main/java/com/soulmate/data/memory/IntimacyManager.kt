@@ -29,6 +29,8 @@ class IntimacyManager @Inject constructor(
     companion object {
         private const val PREFS_NAME = "intimacy_preferences"
         private const val KEY_CURRENT_SCORE = "current_score"
+        private const val KEY_LAST_BASE_GAIN_AT = "last_base_gain_at"
+        private const val KEY_LAST_EMOTIONAL_GAIN_AT = "last_emotional_gain_at"
         
         /** 最大亲密度分数 */
         const val MAX_SCORE = 1000
@@ -37,22 +39,30 @@ class IntimacyManager @Inject constructor(
         const val POINTS_PER_CHAT = 1
         
         /** 情感关键词额外分数 */
-        const val POINTS_EMOTIONAL = 5
+        const val POINTS_EMOTIONAL_LOW = 2
+        const val POINTS_EMOTIONAL_HIGH = 5
         
         /** 等级阈值 */
         const val THRESHOLD_FRIEND = 200
         const val THRESHOLD_CRUSH = 500
         const val THRESHOLD_LOVER = 800
         
-        /** 情感关键词列表 */
-        private val EMOTIONAL_KEYWORDS = listOf(
-            // 爱意表达
-            "爱", "喜欢", "想你", "想念", "宝贝", "亲爱的", "老公", "老婆",
-            // 情感词汇
+        /** 基础加分节流 */
+        private const val BASE_GAIN_COOLDOWN_MS = 60_000L
+
+        /** 情感加分节流 */
+        private const val EMOTIONAL_GAIN_COOLDOWN_MS = 10 * 60_000L
+
+        /** 情感关键词列表（A组：情绪表达，可少量加分） */
+        private val EMOTIONAL_KEYWORDS_A = listOf(
             "心情", "难过", "开心", "快乐", "伤心", "感动", "幸福", "温暖",
-            // 亲昵表达
+            "焦虑", "低落", "失落", "委屈", "害怕", "紧张", "压力", "疲惫"
+        )
+
+        /** 强亲密关键词列表（B组：示爱/亲密称呼，仅 Level2+ 加分） */
+        private val EMOTIONAL_KEYWORDS_B = listOf(
+            "爱你", "喜欢你", "想你", "想念", "宝贝", "亲爱的", "老公", "老婆",
             "抱抱", "亲亲", "么么", "比心", "mua", "❤", "💕", "😘",
-            // 思念
             "好想", "很想", "特别想", "一直想"
         )
     }
@@ -109,9 +119,15 @@ class IntimacyManager @Inject constructor(
      */
     fun containsEmotionalKeyword(text: String): Boolean {
         val lowerText = text.lowercase()
-        return EMOTIONAL_KEYWORDS.any { keyword ->
-            lowerText.contains(keyword.lowercase())
-        }
+        return EMOTIONAL_KEYWORDS_A.any { keyword -> lowerText.contains(keyword.lowercase()) }
+    }
+
+    /**
+     * 检测是否包含强亲密关键词（B组）
+     */
+    fun containsStrongIntimacyKeyword(text: String): Boolean {
+        val lowerText = text.lowercase()
+        return EMOTIONAL_KEYWORDS_B.any { keyword -> lowerText.contains(keyword.lowercase()) }
     }
     
     /**
@@ -149,14 +165,37 @@ class IntimacyManager @Inject constructor(
      * @return 本次获得的分数
      */
     fun processInteraction(userMessage: String): Int {
-        var points = POINTS_PER_CHAT
-        
-        // 如果包含情感关键词，额外加分
-        if (containsEmotionalKeyword(userMessage)) {
-            points += POINTS_EMOTIONAL
+        val now = System.currentTimeMillis()
+        var points = 0
+
+        val lastBaseGainAt = prefs.getLong(KEY_LAST_BASE_GAIN_AT, 0L)
+        if (now - lastBaseGainAt >= BASE_GAIN_COOLDOWN_MS) {
+            points += POINTS_PER_CHAT
+            prefs.edit().putLong(KEY_LAST_BASE_GAIN_AT, now).apply()
         }
-        
-        adjustScore(points)
+
+        val lastEmotionalGainAt = prefs.getLong(KEY_LAST_EMOTIONAL_GAIN_AT, 0L)
+        val canEmotionalGain = now - lastEmotionalGainAt >= EMOTIONAL_GAIN_COOLDOWN_MS
+        val level = getCurrentLevel()
+        val hasGroupA = containsEmotionalKeyword(userMessage)
+        val hasGroupB = containsStrongIntimacyKeyword(userMessage)
+
+        if (canEmotionalGain) {
+            when {
+                hasGroupB && level >= 2 -> {
+                    points += POINTS_EMOTIONAL_HIGH
+                    prefs.edit().putLong(KEY_LAST_EMOTIONAL_GAIN_AT, now).apply()
+                }
+                hasGroupA -> {
+                    points += POINTS_EMOTIONAL_LOW
+                    prefs.edit().putLong(KEY_LAST_EMOTIONAL_GAIN_AT, now).apply()
+                }
+            }
+        }
+
+        if (points > 0) {
+            adjustScore(points)
+        }
         return points
     }
 }

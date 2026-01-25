@@ -5,7 +5,7 @@
   "entities": [
     {
       "id": "1:1821083760812847594",
-      "lastPropertyId": "5:693641899907997471",
+      "lastPropertyId": "8:1902252545101814344",
       "name": "MemoryEntity",
       "properties": [
         {
@@ -35,13 +35,178 @@
           "id": "5:693641899907997471",
           "name": "emotion",
           "type": 9
+        },
+        {
+          "id": "6:2648195368514538112",
+          "name": "tag",
+          "indexId": "5:2988311262926168864",
+          "type": 9,
+          "flags": 2048
+        },
+        {
+          "id": "7:8977727379645944568",
+          "name": "sessionId",
+          "type": 6
+        },
+        {
+          "id": "8:1902252545101814344",
+          "name": "emotionLabel",
+          "type": 9
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "2:7871737253855718267",
+      "lastPropertyId": "9:1222151706046212942",
+      "name": "AnniversaryEntity",
+      "properties": [
+        {
+          "id": "1:4771527958502564330",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:383324006586530678",
+          "name": "type",
+          "type": 9
+        },
+        {
+          "id": "3:4336455420693527488",
+          "name": "name",
+          "type": 9
+        },
+        {
+          "id": "4:4237383395750220716",
+          "name": "month",
+          "type": 5
+        },
+        {
+          "id": "5:6444216179577116015",
+          "name": "day",
+          "type": 5
+        },
+        {
+          "id": "6:1912581228567040804",
+          "name": "year",
+          "type": 5
+        },
+        {
+          "id": "7:1006380778943794250",
+          "name": "message",
+          "type": 9
+        },
+        {
+          "id": "8:2762131635716277085",
+          "name": "createdByAI",
+          "type": 1
+        },
+        {
+          "id": "9:1222151706046212942",
+          "name": "timestamp",
+          "type": 6
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "3:9090402594486833758",
+      "lastPropertyId": "9:7057078024124937636",
+      "name": "ChatMessageEntity",
+      "properties": [
+        {
+          "id": "1:4302632938925038849",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:6319774057934260893",
+          "name": "sessionId",
+          "indexId": "2:2982416287123540100",
+          "type": 6,
+          "flags": 8
+        },
+        {
+          "id": "3:5653319464921291755",
+          "name": "role",
+          "type": 9
+        },
+        {
+          "id": "4:8265248071981960792",
+          "name": "content",
+          "type": 9
+        },
+        {
+          "id": "5:5580067063465898542",
+          "name": "rawContent",
+          "type": 9
+        },
+        {
+          "id": "6:265638206101244762",
+          "name": "timestamp",
+          "indexId": "3:732593449130278302",
+          "type": 6,
+          "flags": 8
+        },
+        {
+          "id": "7:8529894730781170236",
+          "name": "imageUrl",
+          "type": 9
+        },
+        {
+          "id": "8:7976342233420947642",
+          "name": "localImageUri",
+          "type": 9
+        },
+        {
+          "id": "9:7057078024124937636",
+          "name": "localVideoUri",
+          "type": 9
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "4:7751758353663543151",
+      "lastPropertyId": "5:3060906393851887531",
+      "name": "ChatSessionEntity",
+      "properties": [
+        {
+          "id": "1:369908360436724796",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:4739621182631247247",
+          "name": "title",
+          "type": 9
+        },
+        {
+          "id": "3:656318120363075875",
+          "name": "createdAt",
+          "type": 6
+        },
+        {
+          "id": "4:4462296473706229856",
+          "name": "updatedAt",
+          "indexId": "4:3099600357417749549",
+          "type": 6,
+          "flags": 8
+        },
+        {
+          "id": "5:3060906393851887531",
+          "name": "isArchived",
+          "type": 1
         }
       ],
       "relations": []
     }
   ],
-  "lastEntityId": "1:1821083760812847594",
-  "lastIndexId": "1:5396063313565494167",
+  "lastEntityId": "4:7751758353663543151",
+  "lastIndexId": "5:2988311262926168864",
   "lastRelationId": "0:0",
   "lastSequenceId": "0:0",
   "modelVersion": 5,

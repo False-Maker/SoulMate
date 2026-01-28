@@ -76,13 +76,21 @@ class ImageBase64Encoder @Inject constructor() {
             }
             openInputStreamFallback(context, uri)?.use { input ->
                 BitmapFactory.decodeStream(input, null, options)
-            } ?: throw ImageEncodingException("无法打开图片")
+                options // Return non-null object to satisfy use block
+            } ?: run {
+                Log.e(TAG, "Failed to open input stream for bounds check: $uri")
+                throw ImageEncodingException("无法打开图片流")
+            }
             
             val originalWidth = options.outWidth
             val originalHeight = options.outHeight
+            Log.d(TAG, "Read dimensions: ${originalWidth}x${originalHeight}")
             
             if (originalWidth <= 0 || originalHeight <= 0) {
-                throw ImageEncodingException("无法读取图片尺寸")
+                // 有些图片格式可能导致 decodeStream 返回 true 但宽高为 -1，或者直接返回 false
+                // 这里增加更明确的错误日志
+                Log.e(TAG, "Invalid dimensions read: ${originalWidth}x${originalHeight}. Mime: ${options.outMimeType}")
+                throw ImageEncodingException("无法读取图片尺寸 (格式: ${options.outMimeType ?: "unknown"})")
             }
             Log.d(TAG, "Original size: ${originalWidth}x${originalHeight}")
             
@@ -213,9 +221,28 @@ class ImageBase64Encoder @Inject constructor() {
     private fun openInputStreamFallback(context: Context, uri: Uri): java.io.InputStream? {
         return try {
             if (uri.scheme == "file") {
-                val path = uri.path ?: return null
+                val path = uri.path ?: run {
+                    Log.w(TAG, "file:// URI has null path: $uri")
+                    return null
+                }
                 val file = File(path)
-                if (file.exists()) java.io.FileInputStream(file) else null
+                Log.d(TAG, "Opening file:// URI - path=$path, exists=${file.exists()}, canRead=${file.canRead()}, length=${file.length()}")
+                
+                // 如果直接路径不存在，尝试使用 canonicalPath（解决软链接问题）
+                val targetFile = if (file.exists()) {
+                    file
+                } else {
+                    val canonicalFile = file.canonicalFile
+                    Log.d(TAG, "Trying canonical path: ${canonicalFile.absolutePath}, exists=${canonicalFile.exists()}")
+                    if (canonicalFile.exists()) canonicalFile else null
+                }
+                
+                if (targetFile != null && targetFile.exists()) {
+                    java.io.FileInputStream(targetFile)
+                } else {
+                    Log.w(TAG, "File does not exist: $path (canonical: ${file.canonicalPath})")
+                    null
+                }
             } else {
                 context.contentResolver.openInputStream(uri)
                     ?: context.contentResolver.openFileDescriptor(uri, "r")?.let { pfd ->

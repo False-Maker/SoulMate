@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- 外部存储文件目录，用于共享导出的 PDF 报告 -->
+    <external-files-path name="external_files" path="." />
+</paths>

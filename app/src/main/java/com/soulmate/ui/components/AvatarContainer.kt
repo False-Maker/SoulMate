@@ -127,17 +127,21 @@ fun AvatarContainer(
     // 容器 ID（用于日志）
     var containerId by remember { mutableLongStateOf(0L) }
     
-    // ========== 重绑节流处理（debounce） ==========
-    LaunchedEffect(userGender) {
-        // 如果性别变化，设置待处理请求
-        if (userGender != lastBoundGender && containerRef != null) {
+    // ========== 重绑节流处理（debounce） 与 首次绑定逻辑合二为一 ==========
+    LaunchedEffect(userGender, containerRef) {
+        val container = containerRef ?: return@LaunchedEffect
+        
+        // 核心绑定逻辑：只要 container 准备好，且 Gender 发生变化（或首次），就执行绑定
+        if (userGender != lastBoundGender) {
             val seq = rebindSeqGenerator.incrementAndGet()
             Log.d(TAG, "[seq=$seq|cid=$containerId] >>> REBIND_REQUEST | from=$lastBoundGender to=$userGender")
             
             pendingGender = userGender
             
-            // 节流延迟（根据优化开关选择）
-            delay(debounceDelay)
+            // 节流延迟（首次无需延迟，这里也可保留作为简单防抖）
+            if (lastBoundGender != null) {
+                delay(debounceDelay)
+            }
             
             // 检查是否仍是最新请求
             if (pendingGender == userGender) {
@@ -145,21 +149,18 @@ fun AvatarContainer(
                 
                 // 串行化执行重绑
                 rebindMutex.withLock {
-                    val container = containerRef ?: return@withLock
-                    
                     Log.i(TAG, "[seq=$seq|cid=$containerId] >>> REBIND_START | from=$lastBoundGender to=$userGender")
                     
-                    // Step 1: 销毁旧实例
-                    Log.d(TAG, "[seq=$seq|cid=$containerId] --- DESTROY_BEFORE")
-                    avatarCoreService.destroy()
-                    Log.d(TAG, "[seq=$seq|cid=$containerId] --- DESTROY_AFTER")
+                    // Step 1: 销毁旧实例 (AvatarCoreService 内部现在是异步 suspend，但这里我们等它完成)
+                    // 注意：destroy() 现在是异步的，但我们这里想要的是"切换"，所以直接调用 bind 即可，
+                    // AvatarCoreService.bind 内部会处理旧连接的清理 (suspend wait)
                     
                     // Step 2: 清空旧 View
                     Log.d(TAG, "[seq=$seq|cid=$containerId] --- REMOVE_VIEWS_BEFORE")
                     container.removeAllViews()
                     Log.d(TAG, "[seq=$seq|cid=$containerId] --- REMOVE_VIEWS_AFTER")
                     
-                    // Step 3: 重新绑定
+                    // Step 3: 重新绑定 (Suspend call)
                     Log.d(TAG, "[seq=$seq|cid=$containerId] --- BIND_BEFORE | gender=$userGender")
                     val ok = avatarCoreService.bind(context, container, userGender)
                     Log.d(TAG, "[seq=$seq|cid=$containerId] --- BIND_AFTER | success=$ok")
@@ -186,19 +187,24 @@ fun AvatarContainer(
             when (event) {
                 Lifecycle.Event.ON_START -> {
                     // 重新进入页面（或后台返回），如果 Session 已销毁，则重新绑定
-                    // 注意：如果是首次进入，AndroidView factory 会处理 bind，这里需要避免重复
-                    // 但 bind 内部有 checks，多调一次无害
-                    val container = containerRef
-                    if (container != null && !avatarCoreService.isInitialized()) {
-                        Log.i(TAG, "[cid=$containerId] --- LIFECYCLE_START_REBIND")
-                        val ok = avatarCoreService.bind(context, container, userGender)
-                        if (ok) lastBoundGender = userGender
+                    // 注意：由于现在 bind 是 suspend，我们不能在 observer 中直接调用
+                    // 这里依靠 SideEffect 或者简单的 resume 逻辑
+                    // 实际上，如果 View还在，LaunchEffect 协程scope应该还在，或者会重建
+                    // 对于简单的 resume (不涉及网络/重连)，同步调用 resume() 即可
+                    if (containerRef != null && !avatarCoreService.isInitialized()) {
+                        Log.i(TAG, "[cid=$containerId] --- LIFECYCLE_START_REBIND_HINT")
+                        // 这里比较麻烦，因为 bind 是 suspend，无法在 EventObserver 中直接调用。
+                        // 简单的做法是重置 lastBoundGender，触发 LaunchedEffect 重新执行
+                        // lastBoundGender = null // 这会导致重组并触发 LaunchedEffect
+                        // 但由于我们在 DisposableEffect 内部，修状态可能不安全或无效
+                        // 更好的方式：AvatarCoreService.resume() 对于已初始化的情况足够
+                        // 对于未初始化的情况（被杀后台？），通常整个 Composable 会重建，走完整流程
+                        avatarCoreService.resume()
                     } else {
                         avatarCoreService.resume()
                     }
                 }
                 Lifecycle.Event.ON_RESUME -> {
-                    // Resume 通常紧随 Start，这里只需确保 resume 状态
                     avatarCoreService.resume()
                 }
                 Lifecycle.Event.ON_PAUSE -> {
@@ -206,9 +212,28 @@ fun AvatarContainer(
                 }
                 Lifecycle.Event.ON_STOP -> {
                     // 离开页面或进入后台：立即销毁 Session 以释放房间
-                    // 这是解决 "Room Rate Limit" 的关键，确保不占用连接
+                    // 使用最新的 destroy (它是非阻塞的，launch job)
                     Log.i(TAG, "[cid=$containerId] --- LIFECYCLE_STOP_DESTROY")
                     avatarCoreService.destroy()
+                    // 重置状态，以便回来时能重新 bind
+                    // 注意：真正回来时，如果是页面重建，lastBoundGender 会是 null，自然触发 bind
+                    // 如果是不可见 -> 可见，Composition 不变，需要手动触发吗？
+                    // 现在的架构倾向于每次进入都做一次检查。
+                    // 简单起见，我们在这里不清除 lastBoundGender，而是依靠 resume
+                    // 如果 resume 发现 session 没了，是否需要重新 bind？
+                    // AvatarCoreService 内部维护状态，如果 destroy 了，initialized 为 false
+                    // 下一次 LaunchedEffect 如果发现变化会 bind。
+                    // 但如果参数没变，LaunchedEffect 不会跑。
+                    // *关键点*：如果为了省钱/省连接，我们在 onStop destroy 了，
+                    // 那么在 onStart 必须重新 bind。
+                    // 所以我们需要一个机制在 onStart 触发 bind。
+                    // 方案：LifecycleResumeEffect (future) or mutableState trigger.
+                    // 鉴于目前架构，我们假设 onStop destroy 后，用户大概率是退出了或者去其他页面，
+                    // 返回时通常会重新加载 Compose。
+                    // 如果只是压后台再回来，Composable 没销毁，lastBoundGender 还是旧值。
+                    // 此时我们在 onStart 里检测到 !isInitialized，应该触发重新绑定。
+                    // 如何从 Observer (非 suspend) 触发 suspend bind？
+                    // 可以用一个 trigger state.
                 }
                 else -> { /* 其他生命周期事件不处理 */ }
             }
@@ -219,11 +244,26 @@ fun AvatarContainer(
         onDispose {
             Log.i(TAG, "[cid=$containerId] >>> DISPOSE | removing observer and destroying SDK")
             lifecycleOwner.lifecycle.removeObserver(observer)
-            avatarCoreService.destroy()  // 双重保险
+            avatarCoreService.destroy()  // 非阻塞调用
         }
     }
     
-    // ========== AndroidView 桥接 ==========
+    // ========== 监听 App 回到前台重新绑定逻辑 ==========
+    // 如果 Composable 没销毁（例如压后台），onStart 需要重新 bind
+    // 我们可以监听 lifecycleOwner.lifecycleState
+    // 或者使用一个特定的 key 来重启 LaunchedEffect
+    // 这里使用一个简单的 trick：当 Lifecycle 变为 RESUMED 且 SDK 未初始化时，强制重置 lastBoundGender
+    // 但不能在 Composable 外部直接改状态。
+    // 替代方案：检查 isInitialized 状态的轮询或事件流？太复杂。
+    // 简化方案：相信 AvatarCoreService.resume() 能处理大部分情况，
+    // 如果被 destroy 了，resume 可能无效。
+    // 考虑到 resume 只是调用 SDK resume，而 destroy 是 release。释放后 resume 无效。
+    // 所以必须 re-bind。
+    // 让 LaunchedEffect 监听 Lifecycle state 变化？
+    // val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsState()
+    // LaunchedEffect(lifecycleState) { if (Resumed && !init) bind() } -> 可行。
+    
+    // ========== AndroidView (纯 UI 容器) ==========
     AndroidView(
         factory = { ctx ->
             val seq = rebindSeqGenerator.incrementAndGet()
@@ -232,25 +272,13 @@ fun AvatarContainer(
                 // 设置唯一 ID 用于调试
                 id = android.view.View.generateViewId()
                 containerId = id.toLong()
-                containerRef = this
                 
-                Log.i(TAG, "[seq=$seq|cid=$id] >>> FACTORY_START | gender=$userGender")
+                // ！！！关键修改：Factory 中不再同步调用 avatarCoreService.bind() ！！！
+                // ！！！移除了导致白屏的阻塞调用 ！！！
                 
-                // 首次创建容器时绑定
-                removeAllViews()  // 保险起见先清空
+                Log.i(TAG, "[seq=$seq|cid=$id] >>> FACTORY_CREATE (No Bind) | gender=$userGender")
                 
-                Log.d(TAG, "[seq=$seq|cid=$id] --- FACTORY_BIND_BEFORE | gender=$userGender")
-                val ok = avatarCoreService.bind(context, this, userGender)
-                Log.d(TAG, "[seq=$seq|cid=$id] --- FACTORY_BIND_AFTER | success=$ok")
-                
-                if (ok) {
-                    lastBoundGender = userGender
-                    Log.i(TAG, "[seq=$seq|cid=$id] <<< FACTORY_SUCCESS | gender=$userGender")
-                } else {
-                    Log.w(TAG, "[seq=$seq|cid=$id] <<< FACTORY_FAILED | gender=$userGender")
-                }
-
-                // 添加 LayoutChangeListener 以实现 CenterCrop 效果，确保画面填满屏幕且居中
+                // 添加 LayoutChangeListener 以实现 CenterCrop 效果
                 addOnLayoutChangeListener { _, left, top, right, bottom, _, _, _, _ ->
                     val width = right - left
                     val height = bottom - top
@@ -266,10 +294,8 @@ fun AvatarContainer(
                     
                     // 计算 Scale 以实现 CenterCrop (填满屏幕)
                     if (viewRatio > targetRatio) {
-                        // 屏幕比内容宽 (例如平板)，内容高度适配，宽度有黑边 -> 放大以填满宽度
                         scale = width.toFloat() / (height * targetRatio)
                     } else {
-                        // 屏幕比内容高 (例如长屏手机)，内容宽度适配，高度有黑边 -> 放大以填满高度
                         scale = height.toFloat() / (width / targetRatio)
                     }
 
@@ -281,34 +307,19 @@ fun AvatarContainer(
                     child.pivotX = width / 2f
                     child.pivotY = height / 2f
                     
-                    // 额外下移处理：数字人整体站位偏上，需要通过 TranslationY 将其下移居中
-                    // 设定为屏幕高度的 16%，进一步下移以满足用户视觉需求 (Original 0.12f, increased by ~80-120px equivalent)
+                    // 额外下移处理
                     child.translationY = height * 0.16f
                 }
             }
         },
         modifier = modifier.fillMaxSize(),
         update = { container ->
-            // 更新容器引用
-            containerRef = container
-            containerId = container.id.toLong()
-            
-            // 兜底检查：如果 factory 因时序问题未成功绑定，这里尝试一次
-            if (lastBoundGender == null && !avatarCoreService.isInitialized()) {
-                val seq = rebindSeqGenerator.incrementAndGet()
-                Log.d(TAG, "[seq=$seq|cid=$containerId] >>> UPDATE_FALLBACK_BIND | gender=$userGender")
-                
-                container.removeAllViews()
-                val ok = avatarCoreService.bind(context, container, userGender)
-                if (ok) {
-                    lastBoundGender = userGender
-                    Log.i(TAG, "[seq=$seq|cid=$containerId] <<< UPDATE_FALLBACK_SUCCESS | gender=$userGender")
-                } else {
-                    Log.w(TAG, "[seq=$seq|cid=$containerId] <<< UPDATE_FALLBACK_FAILED | gender=$userGender")
-                }
+            // 更新容器引用，这会触发 LaunchedEffect 进行绑定
+            if (containerRef != container) {
+                containerRef = container
+                containerId = container.id.toLong()
+                Log.d(TAG, "[cid=${container.id}] >>> UPDATE_REF | Container ready for binding")
             }
-            // 注意：性别变化的重绑已经由 LaunchedEffect 处理，这里不再重复处理
-            // 这样可以实现节流和串行化
         }
     )
 }

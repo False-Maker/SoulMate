@@ -93,6 +93,13 @@ class AvatarCoreService @Inject constructor(
     private var recoveryAttempts = 0
 
     private val recoveryMutex = Mutex()
+
+    /** 
+     * 全局操作锁，确保 bind/release/destroy 等资源竞争操作串行执行
+     * 替换原有的 synchronized 块或隐式并发，改用协程锁
+     */
+    private val operationMutex = Mutex()
+
     
     // ========== 诊断日志辅助方法 ==========
     /** 统一日志前缀，包含所有关键诊断字段 */
@@ -122,7 +129,7 @@ class AvatarCoreService @Inject constructor(
      * @param appSecret 应用密钥
      * @return true 如果初始化成功
      */
-    private fun initializeOptimized(activityContext: Context, containerView: ViewGroup, appId: String, appSecret: String): Boolean {
+    private suspend fun initializeOptimized(activityContext: Context, containerView: ViewGroup, appId: String, appSecret: String): Boolean {
         // Enforce previous session cleanup
         if (avatarInstance != null) {
             Log.w(TAG, "${logPrefix()} >>> INIT_OPT_PRE_CLEANUP | Force releasing previous session")
@@ -155,7 +162,7 @@ class AvatarCoreService @Inject constructor(
      * 初始化 SDK（使用反射调用避免 Kotlin 版本兼容性问题）
      * @param activityContext 必须传 Activity 而非 ApplicationContext，否则 GL 渲染无法显示
      */
-    fun initialize(activityContext: Context, containerView: ViewGroup, appId: String, appSecret: String): Boolean {
+    suspend fun initialize(activityContext: Context, containerView: ViewGroup, appId: String, appSecret: String): Boolean {
         // Enforce previous session cleanup
         if (avatarInstance != null) {
             Log.w(TAG, "${logPrefix()} >>> INIT_PRE_CLEANUP | Force releasing previous session")
@@ -216,7 +223,7 @@ class AvatarCoreService @Inject constructor(
             // 创建 InitConfig 实例
             val initConfigClass = Class.forName("com.xmov.metahuman.sdk.data.InitConfig")
             val initConfigConstructor = initConfigClass.constructors.firstOrNull { 
-                it.parameterCount >= 4 
+                it.parameterTypes.size >= 4 
             }
             
             val initConfig = if (initConfigConstructor != null) {
@@ -471,19 +478,19 @@ class AvatarCoreService @Inject constructor(
      */
     private fun handleListenerCallback(methodName: String, args: Array<Any?>?): Any? {
         // 安全格式化参数，防止刷屏
-        val argsStr = args?.joinToString { truncate(it?.toString()) } ?: ""
+        // val argsStr = args?.joinToString { truncate(it?.toString()) } ?: ""
         
         when (methodName) {
             // ========== 核心回调：始终打印 ==========
             "onInitEvent" -> {
                 val code = args?.getOrNull(0) as? Int ?: -1
                 val message = args?.getOrNull(1) as? String
-                Log.w(TAG, "${logPrefix()} >>> CB_onInitEvent | code=$code msg=$message")
+                // Log.w(TAG, "${logPrefix()} >>> CB_onInitEvent | code=$code msg=$message")
                 if (code == 0) {
                     isAvatarInitialized = true
                     recoveryAttempts = 0  // 成功初始化，重置恢复计数
                     _avatarState.value = AvatarState.Idle
-                    Log.i(TAG, "${logPrefix()} <<< SDK_INIT_SUCCESS")
+                    // Log.i(TAG, "${logPrefix()} <<< SDK_INIT_SUCCESS")
                 } else {
                     isAvatarInitialized = false
                     _avatarState.value = AvatarState.Error(message ?: "初始化失败")
@@ -499,13 +506,13 @@ class AvatarCoreService @Inject constructor(
             
             "onVoiceStateChange" -> {
                 val status = args?.getOrNull(0) as? String
-                Log.i(TAG, "${logPrefix()} >>> CB_onVoiceStateChange | status=$status")
+                // Log.i(TAG, "${logPrefix()} >>> CB_onVoiceStateChange | status=$status")
                 when (status) {
                     "voice_start" -> {
                         _avatarState.value = AvatarState.Speaking
                         // 根据文档，output_audio=true 时SDK应该自己播放
                         // 但如果SDK通过回调返回音频数据，我们会在回调中处理
-                        Log.d(TAG, "${logPrefix()} Voice started - SDK should play audio automatically (output_audio=true)")
+                        // Log.d(TAG, "${logPrefix()} Voice started - SDK should play audio automatically (output_audio=true)")
                     }
                     "voice_end" -> {
                         _avatarState.value = AvatarState.Idle
@@ -519,49 +526,52 @@ class AvatarCoreService @Inject constructor(
             
             // ========== 网络事件：始终打印（关键诊断信息） ==========
             "onReconnectEvent" -> {
-                Log.w(TAG, "${logPrefix()} >>> CB_onReconnectEvent | args=$argsStr")
+                // Log.w(TAG, "${logPrefix()} >>> CB_onReconnectEvent | args=$argsStr")
             }
             
             "onOfflineEvent" -> {
-                Log.w(TAG, "${logPrefix()} >>> CB_onOfflineEvent | args=$argsStr")
+                // Log.w(TAG, "${logPrefix()} >>> CB_onOfflineEvent | args=$argsStr")
                 // 可能需要触发重连逻辑
             }
             
             "onNetworkInfo" -> {
-                Log.i(TAG, "${logPrefix()} >>> CB_onNetworkInfo | args=$argsStr")
+                // Log.i(TAG, "${logPrefix()} >>> CB_onNetworkInfo | args=$argsStr")
             }
             
             // ========== 状态变化：始终打印 ==========
             "onStateChange", "onStatusChange" -> {
-                Log.i(TAG, "${logPrefix()} >>> CB_$methodName | args=$argsStr")
+                // Log.i(TAG, "${logPrefix()} >>> CB_$methodName | args=$argsStr")
             }
             
             "onMessage" -> {
                 // SDK 消息回调，可能包含重要信息
-                Log.i(TAG, "${logPrefix()} >>> CB_onMessage | args=$argsStr")
+                // Log.i(TAG, "${logPrefix()} >>> CB_onMessage | args=$argsStr")
             }
             
             "onWidgetEvent" -> {
-                Log.d(TAG, "${logPrefix()} >>> CB_onWidgetEvent | args=$argsStr")
+                // Log.d(TAG, "${logPrefix()} >>> CB_onWidgetEvent | args=$argsStr")
             }
             
             "onError" -> {
-                Log.e(TAG, "${logPrefix()} >>> CB_onError | args=$argsStr")
+                // Log.e(TAG, "${logPrefix()} >>> CB_onError | args=$argsStr")
                 // 检查是否是缓存相关错误
                 val errorMsg = args?.getOrNull(0)?.toString() ?: ""
                 if (errorMsg.contains("ENOENT") || errorMsg.contains("No such file") || 
                     errorMsg.contains(CACHE_DIR_NAME) ||
                     (errorMsg.contains("Failed to load resource") && errorMsg.contains("char_data.bin"))) {
                     handleCacheMissingError(Exception(errorMsg))
+                } else {
+                    // 只打印真正的错误
+                    Log.e(TAG, "${logPrefix()} >>> CB_onError | msg=$errorMsg")
                 }
             }
             
             // ========== 调试回调：采样打印（降噪） ==========
             "onDebugInfo" -> {
                 debugCallbackCounter++
-                if (debugCallbackCounter % DEBUG_CALLBACK_SAMPLE_RATE == 1) {
-                    Log.d(TAG, "${logPrefix()} >>> CB_onDebugInfo (sampled 1/$DEBUG_CALLBACK_SAMPLE_RATE) | args=$argsStr")
-                }
+                // if (debugCallbackCounter % DEBUG_CALLBACK_SAMPLE_RATE == 1) {
+                //     Log.d(TAG, "${logPrefix()} >>> CB_onDebugInfo (sampled 1/$DEBUG_CALLBACK_SAMPLE_RATE) | args=$argsStr")
+                // }
             }
             
             // ========== 音频数据回调：备用方案（如果SDK不自动播放） ==========
@@ -589,28 +599,28 @@ class AvatarCoreService @Inject constructor(
                     
                     if (audioData != null && audioData.isNotEmpty()) {
                         // SDK没有自动播放，我们手动播放
-                        Log.w(TAG, "${logPrefix()} >>> CB_$methodName | SDK returned audio data (not auto-playing), using manual playback | size=${audioData.size} bytes")
+                        // Log.w(TAG, "${logPrefix()} >>> CB_$methodName | SDK returned audio data (not auto-playing), using manual playback | size=${audioData.size} bytes")
                         // 首次收到音频数据时启动播放器
                         if (debugCallbackCounter == 0) {
                             audioPlayer.play()
                         }
                         audioPlayer.setAudioData(audioData)
                         // 采样打印，避免刷屏（每50次打印一次）
-                        if (debugCallbackCounter % 50 == 0) {
-                            Log.i(TAG, "${logPrefix()} >>> CB_$methodName | audioDataSize=${audioData.size} bytes")
-                        }
+                        // if (debugCallbackCounter % 50 == 0) {
+                        //    Log.i(TAG, "${logPrefix()} >>> CB_$methodName | audioDataSize=${audioData.size} bytes")
+                        // }
                         debugCallbackCounter++
                     } else {
-                        Log.d(TAG, "${logPrefix()} >>> CB_$methodName (possible audio callback but no valid data) | argsCount=${args?.size} argsTypes=${args?.map { it?.javaClass?.simpleName }}")
+                        // Log.d(TAG, "${logPrefix()} >>> CB_$methodName (possible audio callback but no valid data) | argsCount=${args?.size} argsTypes=${args?.map { it?.javaClass?.simpleName }}")
                     }
                 } else {
                     // ========== 其他回调：统一格式打印 ==========
                     // 对于未知的回调，也记录一下，方便发现音频回调方法名
                     if (args?.any { it is ByteArray } == true) {
                         // 如果参数中包含 ByteArray，可能是音频数据回调但方法名不匹配我们的模式
-                        Log.w(TAG, "${logPrefix()} >>> CB_$methodName (contains ByteArray, might be audio callback) | args=$argsStr")
+                        // Log.w(TAG, "${logPrefix()} >>> CB_$methodName (contains ByteArray, might be audio callback) | args=$argsStr")
                     } else {
-                        Log.d(TAG, "${logPrefix()} >>> CB_$methodName | args=$argsStr")
+                        // Log.d(TAG, "${logPrefix()} >>> CB_$methodName | args=$argsStr")
                     }
                 }
             }
@@ -1037,7 +1047,28 @@ class AvatarCoreService @Inject constructor(
      * 
      * 解决"房间限流"问题：确保在 destroy() 之前先断开连接
      */
-    fun release() {
+    /**
+     * 释放 SDK 资源 (Suspend Version)
+     * 
+     * 根据官方文档：https://xingyun3d.com/developers/52-193
+     * 正确的关闭流程：
+     * 1. interrupt() - 打断当前活动
+     * 2. switchModel(true) - 切换到离线模式（断开服务器连接，关闭房间）
+     * 3. destroy() - 销毁 SDK 实例，释放资源
+     * 
+     * Refactoring Note: 改为 suspend 函数，使用 delay 替代 Thread.sleep，避免阻塞主线程
+     */
+    suspend fun release() {
+        // 使用操作锁保护，防止并发释放/绑定
+        operationMutex.withLock {
+            releaseInternal()
+        }
+    }
+
+    /**
+     * 内部释放逻辑，需假设已在锁内
+     */
+    private suspend fun releaseInternal() {
         Log.i(TAG, "${logPrefix()} >>> RELEASE_START | Force Offline Mode")
         try {
             avatarInstance?.let { instance ->
@@ -1058,12 +1089,9 @@ class AvatarCoreService @Inject constructor(
                     switchModelMethod.invoke(instance, true)  // true = 切换到离线模式
                     Log.i(TAG, "${logPrefix()} --- SWITCH_TO_OFFLINE_OK | Room Disconnect triggered")
                     
-                    // 强制等待一小段时间，让 Close 信令发出
-                    try {
-                        Thread.sleep(500)
-                    } catch (e: InterruptedException) {
-                        Thread.currentThread().interrupt()
-                    }
+                    // 非阻塞等待，确保信令发出
+                    // 2026-01-26: 增加等待时间到 1500ms，以解决 Room Rate Limit 问题
+                    delay(1500)
                 } catch (_: NoSuchMethodException) {
                     Log.w(TAG, "${logPrefix()} --- SWITCH_MODEL_METHOD_NOT_FOUND | Critical for connection close")
                 } catch (e: Exception) {
@@ -1093,8 +1121,6 @@ class AvatarCoreService @Inject constructor(
         abandonAudioFocus()
         
         Log.d(TAG, "${logPrefix()} <<< RELEASE_DONE")
-        // Note: We don't cancel serviceScope here as this service is a Singleton
-        // and might be reused or re-initialized.
     }
     
     fun isInitialized(): Boolean = isAvatarInitialized
@@ -1104,63 +1130,64 @@ class AvatarCoreService @Inject constructor(
      * @param activityContext 必须传 Activity context
      * @param userGender 用户性别，用于选择对应的数字人
      */
-    fun bind(activityContext: Context, container: ViewGroup, userGender: UserGender = UserGender.MALE): Boolean {
-        // 更新当前性别
-        currentGender = userGender
-        
-        Log.i(TAG, "${logPrefix()} >>> BIND_START | userGender=$userGender containerId=${container.id}")
-        
-        // 关键修复：在 bind 之前，确保旧连接完全关闭
-        // 如果已有实例，先完全释放，避免"房间限流"错误
-        // 注意：2026-01-25 更新：增加等待时间至 1500ms，确保 Server 端完全断开
-        if (avatarInstance != null || isAvatarInitialized) {
-            Log.w(TAG, "${logPrefix()} --- PRE_BIND_CLEANUP | 检测到残留连接，执行强制清理")
-            release()
-            // 等待较长时间确保连接完全关闭（使用 Thread.sleep，避免阻塞主线程）
-            try {
-                Thread.sleep(1500)  // 增加到 1500ms
-            } catch (e: InterruptedException) {
-                Thread.currentThread().interrupt()
+    /**
+     * 绑定到 UI 容器并初始化 (Suspend Version)
+     * @param activityContext 必须传 Activity context
+     * @param userGender 用户性别，用于选择对应的数字人
+     */
+    suspend fun bind(activityContext: Context, container: ViewGroup, userGender: UserGender = UserGender.MALE): Boolean {
+        // 使用操作锁保护
+        return operationMutex.withLock {
+            // 更新当前性别
+            currentGender = userGender
+            
+            Log.i(TAG, "${logPrefix()} >>> BIND_START | userGender=$userGender containerId=${container.id}")
+            
+            // 关键修复：在 bind 之前，确保旧连接完全关闭
+            if (avatarInstance != null || isAvatarInitialized) {
+                Log.w(TAG, "${logPrefix()} --- PRE_BIND_CLEANUP | 检测到残留连接，执行强制清理")
+                releaseInternal() // 在锁内调用 internal 方法
+                
+                // 等待较长时间确保连接完全关闭（使用 delay非阻塞）
+                // 2026-01-26: 增加缓冲时间到 2000ms
+                delay(2000)
             }
-        }
-        
-        // 根据用户性别选择对应的数字人 API Key
-        // 男性用户 → 女性数字人 (姜岩)
-        // 女性用户 → 男性数字人 (待配置真正的男性数字人)
-        
-        val (appId, appSecret, avatarName) = when (userGender) {
-            UserGender.FEMALE -> {
-                val maleId = BuildConfig.XMOV_APP_ID_MALE
-                if (maleId.isEmpty()) {
-                    Log.e(TAG, "${logPrefix()} XMOV_APP_ID_MALE not configured!")
+            
+            // 根据用户性别选择对应的数字人 API Key
+            val (appId, appSecret, avatarName) = when (userGender) {
+                UserGender.FEMALE -> {
+                    val maleId = BuildConfig.XMOV_APP_ID_MALE
+                    if (maleId.isEmpty()) {
+                        Log.e(TAG, "${logPrefix()} XMOV_APP_ID_MALE not configured!")
+                    }
+                    Triple(maleId, BuildConfig.XMOV_APP_SECRET_MALE, "霸总-绑带版(男性数字人)")
                 }
-                Triple(maleId, BuildConfig.XMOV_APP_SECRET_MALE, "霸总-绑带版(男性数字人)")
+                else -> Triple(BuildConfig.XMOV_APP_ID, BuildConfig.XMOV_APP_SECRET, "姜岩(女性数字人)")
             }
-            else -> Triple(BuildConfig.XMOV_APP_ID, BuildConfig.XMOV_APP_SECRET, "姜岩(女性数字人)")
-        }
-        
-        if (appId.isEmpty()) {
-            Log.e(TAG, "${logPrefix()} <<< BIND_FAIL | AppID is empty!")
-            _avatarState.value = AvatarState.Error("数字人配置缺失，请在 local.properties 设置 XMOV_APP_ID/XMOV_APP_ID_MALE")
-            return false
-        }
+            
+            if (appId.isEmpty()) {
+                Log.e(TAG, "${logPrefix()} <<< BIND_FAIL | AppID is empty!")
+                _avatarState.value = AvatarState.Error("数字人配置缺失，请在 local.properties 设置 XMOV_APP_ID/XMOV_APP_ID_MALE")
+                return@withLock false
+            }
 
-        Log.i(TAG, "${logPrefix()} --- BIND_CONFIG | avatar=$avatarName appId=${appId.take(8)}...")
-        
-        // 根据优化开关选择初始化方法（默认启用优化）
-        val result = if (userPreferencesRepository.isFastAvatarInitEnabled()) {
-            try {
-                initializeOptimized(activityContext, container, appId, appSecret)
-            } catch (e: Exception) {
-                Log.w(TAG, "${logPrefix()} Optimized init failed, falling back to original: ${e.message}")
+            Log.i(TAG, "${logPrefix()} --- BIND_CONFIG | avatar=$avatarName appId=${appId.take(8)}...")
+            
+            // 根据优化开关选择初始化方法（默认启用优化）
+            val result = if (userPreferencesRepository.isFastAvatarInitEnabled()) {
+                try {
+                    initializeOptimized(activityContext, container, appId, appSecret)
+                } catch (e: Exception) {
+                    Log.w(TAG, "${logPrefix()} Optimized init failed, falling back to original: ${e.message}")
+                    initialize(activityContext, container, appId, appSecret)
+                }
+            } else {
                 initialize(activityContext, container, appId, appSecret)
             }
-        } else {
-            initialize(activityContext, container, appId, appSecret)
+            
+            Log.i(TAG, "${logPrefix()} <<< BIND_RESULT | success=$result")
+            result
         }
-        
-        Log.i(TAG, "${logPrefix()} <<< BIND_RESULT | success=$result")
-        return result
     }
     
     fun resume() {
@@ -1194,8 +1221,11 @@ class AvatarCoreService @Inject constructor(
     }
     
     fun destroy() {
-        Log.i(TAG, "${logPrefix()} >>> DESTROY")
-        release()
-        Log.i(TAG, "${logPrefix()} <<< DESTROY_DONE")
+        Log.i(TAG, "${logPrefix()} >>> DESTROY_REQUESTED")
+        // 异步执行清理，不阻塞 UI 线程
+        serviceScope.launch {
+            release()
+            Log.i(TAG, "${logPrefix()} <<< DESTROY_ASYNC_DONE")
+        }
     }
 }

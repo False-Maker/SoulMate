@@ -191,6 +191,13 @@ class MindWatchService @Inject constructor(
             return
         }
         
+        // 如果当前消息包含 warning 关键词，设置 CAUTION 状态（单条负面）
+        // WARNING 状态保留给累计多条负面记录的情况
+        if (hasWarning) {
+            _currentStatus.value = WatchStatus.CAUTION
+            return
+        }
+        
         // 获取最近记录重新计算
         recalculateStatus()
     }

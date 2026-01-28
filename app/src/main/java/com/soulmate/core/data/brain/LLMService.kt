@@ -213,6 +213,8 @@ class LLMService @Inject constructor(
                         // 每收到一个 token 立即发射累积结果
                         emit(accumulated.toString())
                     }
+                } catch (e: java.util.concurrent.CancellationException) {
+                    throw e // 重新抛出协程取消异常
                 } catch (e: Exception) {
                     Log.w(TAG, "Failed to parse SSE chunk: $data", e)
                     // 继续处理下一个 chunk，不中断流
@@ -315,6 +317,8 @@ class LLMService @Inject constructor(
                             emit(accumulated.toString())
                         }
                     }
+                } catch (e: java.util.concurrent.CancellationException) {
+                    throw e // 重新抛出协程取消异常，不记录为错误
                 } catch (e: Exception) {
                     Log.w(TAG, "Failed to parse SSE chunk: $data", e)
                     // 继续处理下一个 chunk，不中断流

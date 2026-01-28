@@ -65,7 +65,9 @@ class ObjectBoxMemoryRepository @Inject constructor(
                 else -> tag
             }
         )
-        box.put(memory)
+        val id = box.put(memory)
+        android.util.Log.d("MemoryRepository", "Saved memory with tag: $tag, ID: $id")
+        id
     }
 
     override suspend fun saveChunks(

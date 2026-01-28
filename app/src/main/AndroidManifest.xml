@@ -54,7 +54,19 @@
             android:exported="true"
             android:label="Embedding Test"
             android:theme="@style/Theme.SoulMate"/>
+        
+        <!-- FileProvider for sharing exported PDF files -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
+
 
 </manifest>
 

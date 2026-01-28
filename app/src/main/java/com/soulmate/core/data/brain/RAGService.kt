@@ -234,6 +234,22 @@ class RAGService @Inject constructor(
         minSimilarity: Float = MIN_SIMILARITY,
         halfLifeDays: Double = HALF_LIFE_DAYS
     ): ComputeMemoriesResult {
+        // 关键优化：如果数据库是空的，直接跳过 Embedding API 调用
+        // 这解决了"第一次对话报错"的问题，也节省了 API 调用
+        if (!memoryRepository.hasAnyMemory()) {
+            return ComputeMemoriesResult(
+                topMemories = emptyList(),
+                debugInfo = ContextDebugInfo(
+                    hitCount = 0,
+                    minSimilarity = 0f,
+                    maxSimilarity = 0f,
+                    avgSimilarity = 0f,
+                    tagDistribution = emptyMap(),
+                    candidatesCount = 0
+                )
+            )
+        }
+
         // 如果启用优化 RAG，使用优化版本（默认关闭）
         if (userPreferencesRepository.isOptimizedRagEnabled()) {
             return try {
@@ -605,6 +621,13 @@ class RAGService @Inject constructor(
                 )
             }
         }
+    }
+
+    /**
+     * 获取记忆总数
+     */
+    suspend fun getMemoryCount(): Long {
+        return memoryRepository.getMemoryCount()
     }
 
     /**

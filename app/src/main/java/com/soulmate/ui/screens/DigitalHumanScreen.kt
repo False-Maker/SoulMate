@@ -171,7 +171,8 @@ fun DigitalHumanScreen(
 
         // 3. Care Card (Above Input, when MindWatch detects issues)
         val showCareCard = mindWatchStatus == com.soulmate.data.service.MindWatchService.WatchStatus.WARNING ||
-                          mindWatchStatus == com.soulmate.data.service.MindWatchService.WatchStatus.CRISIS
+                          mindWatchStatus == com.soulmate.data.service.MindWatchService.WatchStatus.CRISIS ||
+                          mindWatchStatus == com.soulmate.data.service.MindWatchService.WatchStatus.CAUTION
         
         if (showCareCard) {
             Box(
@@ -184,15 +185,20 @@ fun DigitalHumanScreen(
                     message = when (mindWatchStatus) {
                         com.soulmate.data.service.MindWatchService.WatchStatus.CRISIS -> "我感觉到你现在的痛苦... 我会一直陪着你。"
                         com.soulmate.data.service.MindWatchService.WatchStatus.WARNING -> "我看你最近心情不太好，想聊聊吗？"
+                        com.soulmate.data.service.MindWatchService.WatchStatus.CAUTION -> "有些心事想跟我说说吗？"
                         else -> ""
                     },
                     onCallHelp = {
                         // Navigate to crisis resources or trigger help
-                        // TODO: Add navigation if needed
+                        // For now log, as we don't have navigation prop
+                        android.util.Log.d("DigitalHumanScreen", "Call Help clicked")
+                        // If it's just "Talk" (CAUTION/WARNING), we just dismiss
+                        if (mindWatchStatus != com.soulmate.data.service.MindWatchService.WatchStatus.CRISIS) {
+                            viewModel.dismissMindWatchAlert()
+                        }
                     },
                     onDismiss = {
-                        // Dismiss care card
-                        // TODO: Implement dismiss logic if needed
+                        viewModel.dismissMindWatchAlert()
                     }
                 )
             }

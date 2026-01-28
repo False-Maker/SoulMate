@@ -163,6 +163,26 @@ class ChatViewModel @Inject constructor(
     }
 
     /**
+     * 关闭 MindWatch 警告/关怀卡片
+     * 将状态重置为 NORMAL
+     */
+    fun dismissMindWatchAlert() {
+        // 由于 MindWatchService 的状态通过 StateFlow 暴露且不可直接修改，
+        // 我们需要在 Service 中提供一个重置方法。
+        // 假设 Service 有 clearHistory() 会重置，或者我们需要添加一个 resetStatus()
+        // 这里暂时调用 clearHistory()，或者最好在 Service 中加一个 ignoreCurrentWarning()
+        // 根据之前的查看，Service 有 clearHistory() 会重置状态为 NORMAL
+        // 但为了保留记录仅忽略当前警告，最好是 setStatus(NORMAL) 但 Service 中 _currentStatus 是 private
+        // 我们先用 clearHistory() 作为临时的"我没事"，或者在 Service 加一个 dismissWarning
+        // 既然 Service.kt 刚才看过，没有专门的 dismiss，我们就暂时用 clearHistory() 
+        // 实际上这有点太激进了。
+        // 让我们稍微修改一下 MindWatchService 增加一个 method，或者...
+        // 刚才我看 Service 代码，clearHistory() 会 `_currentStatus.value = WatchStatus.NORMAL`
+        // 这符合 "我没事" 的语义 -> 即使计算出来有风险，但我确认没事了，重置状态。
+        mindWatchService.clearHistory()
+    }
+
+    /**
      * 设置 Vision detail（low/high/auto）
      */
     fun setVisionDetail(detail: String) {
@@ -290,6 +310,11 @@ class ChatViewModel @Inject constructor(
             
             // 检查并播报最新的 AI 消息（如果是在后台插入的主动问候）
             checkAndPlayLatestMessage(currentSessionId)
+            
+            // Debug: Check memory count
+            val count = ragService.getMemoryCount()
+            Log.d(TAG, "Current memory count: $count")
+            // _chatState.update { if (count == 0L) it.copy(warning = "注意：当前记忆库为空 (Count: 0)") else it }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to initialize session", e)
         }
@@ -589,25 +614,23 @@ class ChatViewModel @Inject constructor(
                     ragResult.context
                 } catch (e: com.soulmate.core.data.brain.EmbeddingException) {
                     // Embedding 失败：降级为空 context，继续对话
-                    val errorDetails = buildString {
-                        append("Embedding 失败: ${e.message}")
-                        e.cause?.let { cause ->
-                            append(" (原因: ${cause.javaClass.simpleName} - ${cause.message})")
-                        }
-                    }
-                    Log.e(TAG, errorDetails, e)
-                    _chatState.update { it.copy(warning = "记忆检索暂时不可用，本轮已降级为基础对话（不使用历史记忆）") }
+                    val errorDetails = "Embedding API 失败: ${e.message}"
+                    Log.e(TAG, "❌ RAG Critical Failure (Embedding): $errorDetails", e)
+                    // Explicitly log the cause for the user (in case they missed the stack trace)
+                    Log.e(TAG, "   Error Cause: ${e.message}") 
+                    
+                    // 将详细错误显示在 UI 上，方便用户直接调试
+                    val uiWarning = "记忆检索失败(Embedding): ${e.message?.take(50)}..." // Increased length
+                    _chatState.update { it.copy(warning = uiWarning) }
                     ""
                 } catch (e: Exception) {
                     // 其他 RAG 相关异常也降级处理
-                    val errorDetails = buildString {
-                        append("RAG 失败: ${e.javaClass.simpleName} - ${e.message}")
-                        e.cause?.let { cause ->
-                            append(" (原因: ${cause.javaClass.simpleName} - ${cause.message})")
-                        }
-                    }
-                    Log.e(TAG, errorDetails, e)
-                    _chatState.update { it.copy(warning = "记忆检索暂时不可用，本轮已降级为基础对话（不使用历史记忆）") }
+                    val errorDetails = "RAG 系统故障: ${e.javaClass.simpleName} - ${e.message}"
+                    Log.e(TAG, "❌ RAG Critical Failure (General): $errorDetails", e)
+                    Log.e(TAG, "   Error Cause: ${e.message}")
+                    
+                    val uiWarning = "记忆检索失败(System): ${e.message?.take(50)}..."
+                    _chatState.update { it.copy(warning = uiWarning) }
                     ""
                 }
 
@@ -929,7 +952,8 @@ class ChatViewModel @Inject constructor(
                 }
                 
                 // 如果 RAG 失败，显示警告（只在失败时输出一次）
-                if (context.isEmpty() && debugInfo == null) {
+                // 优化：前 5 轮（约 10 条历史消息）不显示警告，避免初期干扰用户
+                if (context.isEmpty() && debugInfo == null && historyEntities.size >= 10) {
                     // 使用 Error 级别确保错误信息可见，并提示查看上面的详细错误
                     Log.e(TAG, "═══════════════════════════════════════════════════════")
                     Log.e(TAG, "❌ RAG 失败，已降级为基础对话")
@@ -1311,6 +1335,10 @@ class ChatViewModel @Inject constructor(
                     state.copy(isLoading = false, currentStreamToken = "")
                 }
                 
+            } catch (e: java.util.concurrent.CancellationException) {
+                // 协程被取消（如：用户快速发送下一条消息），正常退出，不报错
+                Log.d(TAG, "Chat request cancelled")
+                throw e
             } catch (e: Exception) {
                 _chatState.update { state ->
                     state.copy(

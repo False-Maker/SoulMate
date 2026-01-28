@@ -21,7 +21,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.soulmate.ui.navigation.Screen
-import com.soulmate.ui.screens.ChatScreen
+// import com.soulmate.ui.screens.ChatScreen
 import com.soulmate.ui.screens.HomeScreen
 import com.soulmate.ui.screens.MemoryGardenScreen
 import com.soulmate.ui.screens.OnboardingScreen
@@ -167,19 +167,12 @@ fun SoulMateApp(
             
 
 
-            // Chat Screen
+            // Chat Screen (Redirect to Digital Human as ChatScreen is removed)
             composable(Screen.Chat.route) {
-                ChatScreen(
+                // Redirect to Digital Human
+                DigitalHumanScreen(
                     onNavigateBack = {
                         navController.popBackStack()
-                    },
-                    onNavigateToDigitalHuman = {
-                        val popped = navController.popBackStack(Screen.DigitalHuman.route, false)
-                        if (!popped) {
-                            navController.navigate(Screen.DigitalHuman.route) {
-                                launchSingleTop = true
-                            }
-                        }
                     }
                 )
             }
@@ -200,9 +193,10 @@ fun SoulMateApp(
                         navController.popBackStack()
                     },
                     onNavigateToChat = {
-                        val popped = navController.popBackStack(Screen.Chat.route, false)
+                        // Redirect to Digital Human instead of Chat
+                        val popped = navController.popBackStack(Screen.DigitalHuman.route, false)
                         if (!popped) {
-                            navController.navigate(Screen.Chat.route) {
+                            navController.navigate(Screen.DigitalHuman.route) {
                                 launchSingleTop = true
                             }
                         }
@@ -252,26 +246,6 @@ fun SoulMateApp(
                     },
                     currentThemeMode = themeMode,
                     onThemeChange = { newMode -> themeMode = newMode }
-                )
-            }
-
-            // Chat Screen (Deprecated, kept for reference if needed, or route can be removed)
-            composable(Screen.Chat.route) {
-                // Redirect to Fusion
-                ImmersiveFusionScreen(
-                     onNavigateBack = {
-                        navController.popBackStack()
-                    }
-                )
-            }
-            
-            // Digital Human Screen (Deprecated)
-            composable(Screen.DigitalHuman.route) {
-                 // Redirect to Fusion
-                ImmersiveFusionScreen(
-                     onNavigateBack = {
-                        navController.popBackStack()
-                    }
                 )
             }
             

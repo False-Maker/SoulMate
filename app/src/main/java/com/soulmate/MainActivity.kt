@@ -27,6 +27,12 @@ import dagger.hilt.android.AndroidEntryPoint
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @javax.inject.Inject
+    lateinit var avatarCoreService: com.soulmate.data.service.AvatarCoreService
+
+    @javax.inject.Inject
+    lateinit var aliyunASRService: com.soulmate.data.service.AliyunASRService
     
     // Permission request launcher for POST_NOTIFICATIONS (Android 13+)
     private val requestPermissionLauncher = registerForActivityResult(
@@ -56,6 +62,14 @@ class MainActivity : ComponentActivity() {
             SoulMateApp(initialRoute = navigateTo)
         }
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // 关键修复：App 销毁时强制释放数字人资源，防止后台持续计费
+        // 之前因为缺少这一步，导致 App 关闭后 WebSocket 连接可能仍保持，产生高额费用
+        avatarCoreService.destroy()
+        aliyunASRService.release()
+    }
     
     /**
      * Requests POST_NOTIFICATIONS permission on Android 13+ if not already granted.
@@ -83,3 +97,4 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+

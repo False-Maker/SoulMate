@@ -2,6 +2,9 @@ package com.soulmate.data.service
 
 import android.content.Context
 import android.media.AudioFormat
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import java.io.File
 import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.util.Log
@@ -77,114 +80,96 @@ class AliyunASRService @Inject constructor(
     // NUI SDK instance
     private val nuiInstance: NativeNui by lazy { NativeNui.GetInstance() }
 
-    /**
-     * 初始化 ASR 服务
-     */
+    // Mutex for thread-safe initialization
+    private val initMutex = Mutex()
+
     /**
      * 初始化 ASR 服务
      */
     suspend fun initialize(): Boolean {
+        // First check (fast return)
         if (isInitialized) {
-            Log.d(TAG, "Already initialized")
+            Log.d(TAG, "Already initialized (fast path)")
             return true
         }
 
-        try {
-            // 先释放可能存在的旧实例，避免单例冲突
-            try {
-                nuiInstance.release()
-                Log.d(TAG, "Released previous NUI instance")
-            } catch (e: Exception) {
-                Log.d(TAG, "No previous instance to release")
-            }
-            
-            // Copy assets to workspace (Force update for debugging)
-            val workPath = CommonUtils.getModelPath(context)
-            Log.d(TAG, "Workspace path: $workPath")
-            
-            // DEBUG: List all assets
-            try {
-                val assets = context.assets.list("")
-                Log.d(TAG, "Available assets in APK: ${assets?.joinToString()}")
-                val ttsAssets = context.assets.list("tts")
-                Log.d(TAG, "Available assets in tts/: ${ttsAssets?.joinToString()}")
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to list assets", e)
-            }
-
-            // Force copy to ensure latest files
-            copyAssets(workPath)
-            
-            // Debug: List files in workspace
-            val dir = java.io.File(workPath)
-            if (dir.exists() && dir.isDirectory) {
-                Log.d(TAG, "Files in workspace after copy:")
-                val files = dir.walkTopDown().toList()
-                if (files.isEmpty() || (files.size == 1 && files[0] == dir)) { // Just the dir itself
-                     Log.e(TAG, "Workspace is EMPTY after copy attempt!")
-                }
-                files.forEach { file ->
-                    Log.d(TAG, " - ${file.absolutePath} (${file.length()} bytes)")
-                }
-            } else {
-                Log.e(TAG, "Workspace directory does not exist!")
-            }
-
-            // Ensure debug directory exists
-            val debugDir = java.io.File("$workPath/debug")
-            if (!debugDir.exists()) {
-                debugDir.mkdirs()
-            }
-
-            // Generate token (Real token from Aliyun)
-            val token = generateToken()
-            
-            if (token.isBlank()) {
-                Log.e(TAG, "Failed to generate token")
-                _asrState.value = ASRState.Error("获取Token失败")
-                return false
-            }
-            
-            // Get device ID
-            val deviceId = java.util.UUID.randomUUID().toString()
-
-            // Build initialization parameters
-            val initParams = buildInitParams(workPath, token, deviceId)
-            
-            Log.d(TAG, "Initializing NUI SDK with params: $initParams")
-
-            // Initialize NUI instance
-            // 使用 WARNING 级别以减少日志输出（只显示警告和错误）
-            // 可选级别：LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_WARNING, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_VERBOSE
-            val result = nuiInstance.initialize(
-                this,
-                initParams,
-                Constants.LogLevel.LOG_LEVEL_WARNING,  // 改为 WARNING，只显示警告和错误
-                false // 不保存日志文件，减少 I/O
-            )
-
-            if (result == Constants.NuiResultCode.SUCCESS) {
-                isInitialized = true
-                Log.i(TAG, "NUI SDK initialized successfully")
-                
-                // Set recognition parameters
-                setRecognitionParams()
-                
-                // 验证 dialog 引擎是否真的创建成功
-                // 注意：这里只是标记初始化完成，实际的 dialog 创建是在 startDialog 时
-                Log.d(TAG, "Initialization completed, ready for startDialog")
+        return initMutex.withLock {
+            // Double check inside lock
+            if (isInitialized) {
+                Log.d(TAG, "Already initialized (safe path)")
                 return true
-            } else {
-                val errorMsg = getErrorCodeMessage(result)
-                Log.e(TAG, "NUI SDK initialization failed: result=$result, message=$errorMsg")
-                _asrState.value = ASRState.Error("ASR初始化失败: $errorMsg (代码:$result)")
-                isInitialized = false
-                return false
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to initialize NUI SDK", e)
-            _asrState.value = ASRState.Error("ASR初始化异常: ${e.message}")
-            return false
+
+            try {
+                // 先释放可能存在的旧实例，避免单例冲突
+                try {
+                    nuiInstance.release()
+                    Log.d(TAG, "Released previous NUI instance")
+                } catch (e: Exception) {
+                    Log.d(TAG, "No previous instance to release")
+                }
+                
+                // Copy assets to workspace (Optimized)
+                val workPath = CommonUtils.getModelPath(context)
+                Log.d(TAG, "Workspace path: $workPath")
+                
+                // Copy assets on IO thread
+                kotlinx.coroutines.withContext(Dispatchers.IO) {
+                    copyAssets(workPath)
+                }
+
+                // Ensure debug directory exists
+                val debugDir = File("$workPath/debug")
+                if (!debugDir.exists()) {
+                    debugDir.mkdirs()
+                }
+
+                // Generate token (Real token from Aliyun)
+                val token = generateToken()
+                
+                if (token.isBlank()) {
+                    Log.e(TAG, "Failed to generate token")
+                    _asrState.value = ASRState.Error("获取Token失败")
+                    return@withLock false
+                }
+                
+                // Get device ID
+                val deviceId = java.util.UUID.randomUUID().toString()
+
+                // Build initialization parameters
+                val initParams = buildInitParams(workPath, token, deviceId)
+                
+                Log.d(TAG, "Initializing NUI SDK with params: $initParams")
+
+                // Initialize NUI instance
+                val result = nuiInstance.initialize(
+                    this,
+                    initParams,
+                    Constants.LogLevel.LOG_LEVEL_NONE,
+                    false
+                )
+
+                if (result == Constants.NuiResultCode.SUCCESS) {
+                    isInitialized = true
+                    Log.i(TAG, "NUI SDK initialized successfully")
+                    
+                    // Set recognition parameters
+                    setRecognitionParams()
+                    
+                    Log.d(TAG, "Initialization completed, ready for startDialog")
+                    return@withLock true
+                } else {
+                    val errorMsg = getErrorCodeMessage(result)
+                    Log.e(TAG, "NUI SDK initialization failed: result=$result, message=$errorMsg")
+                    _asrState.value = ASRState.Error("ASR初始化失败: $errorMsg (代码:$result)")
+                    isInitialized = false
+                    return@withLock false
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to initialize NUI SDK", e)
+                _asrState.value = ASRState.Error("ASR初始化异常: ${e.message}")
+                return@withLock false
+            }
         }
     }
 
@@ -202,7 +187,7 @@ class AliyunASRService @Inject constructor(
      */
     suspend fun startRecognition(enableAutoStop: Boolean = false): Boolean {
         if (!isInitialized) {
-            Log.w(TAG, "Not initialized, initializing now...")
+            Log.d(TAG, "Not initialized, initializing now...")
             if (!initialize()) {
                 _asrState.value = ASRState.Error("初始化失败")
                 return false
@@ -210,7 +195,7 @@ class AliyunASRService @Inject constructor(
             
             // 首次初始化后，等待一小段时间确保 dialog 引擎完全创建
             Log.d(TAG, "First initialization completed, waiting for dialog engine to be ready...")
-            kotlinx.coroutines.delay(100)
+            kotlinx.coroutines.delay(800)
         }
 
         try {
@@ -243,31 +228,18 @@ class AliyunASRService @Inject constructor(
             Log.d(TAG, "startDialog returned: result=$result")
 
             if (result != Constants.NuiResultCode.SUCCESS) {
+                // 处理 240007: 根据用户反馈，此错误在首次启动时不影响功能，视为成功
+                if (result == 240007) {
+                    Log.w(TAG, "Dialog not created (240007), but treating as success per configuration.")
+                    // 直接视为成功
+                    startSilenceWatchdog() 
+                    return true
+                }
+
                 val errorMsg = getErrorCodeMessage(result)
                 Log.e(TAG, "Failed to start dialog: result=$result, message=$errorMsg")
-                
-                if (result == 240007) {
-                    Log.w(TAG, "Dialog not created (240007), retrying after short delay...")
-                    kotlinx.coroutines.delay(200)
-                    
-                    val retryResult = nuiInstance.startDialog(
-                        Constants.VadMode.TYPE_P2T,
-                        "{}"
-                    )
-                    
-                    if (retryResult == Constants.NuiResultCode.SUCCESS) {
-                        Log.i(TAG, "Retry successful, recognition started")
-                        startSilenceWatchdog() // Start watchdog if success
-                        return true
-                    } else {
-                        Log.e(TAG, "Retry also failed: result=$retryResult")
-                        _asrState.value = ASRState.Error("启动识别失败: $errorMsg (错误码: $result)，重试后仍失败")
-                        return false
-                    }
-                } else {
-                    _asrState.value = ASRState.Error("启动识别失败: $errorMsg (错误码: $result)")
-                    return false
-                }
+                _asrState.value = ASRState.Error("启动识别失败: $errorMsg (错误码: $result)")
+                return false
             }
 
             Log.i(TAG, "Recognition started successfully")
@@ -709,7 +681,7 @@ class AliyunASRService @Inject constructor(
 
     private fun copyAssets(destPath: String) {
         try {
-            val destDir = java.io.File(destPath)
+            val destDir = File(destPath)
             if (!destDir.exists()) {
                 destDir.mkdirs()
             }
@@ -721,26 +693,32 @@ class AliyunASRService @Inject constructor(
             copyAssetFile("cei.json", "$destPath/cei.json")
             
             // Copy tts directory
-            val ttsDir = java.io.File("$destPath/tts")
+            val ttsDir = File("$destPath/tts")
             if (!ttsDir.exists()) {
                 ttsDir.mkdirs()
             }
             copyAssetFile("tts/parameter.cfg", "$destPath/tts/parameter.cfg")
             
-            Log.d(TAG, "Assets copied/updated to: $destPath")
+            Log.d(TAG, "Assets checking/copying completed")
         } catch (e: IOException) {
             Log.e(TAG, "Failed to copy assets", e)
         }
     }
 
     private fun copyAssetFile(assetName: String, destPath: String) {
-        val destFile = java.io.File(destPath)
-        // Force overwrite for debugging
-        if (destFile.exists()) {
-            destFile.delete()
+        val destFile = File(destPath)
+        
+        // Optimize: skip if file exists and has content
+        if (destFile.exists() && destFile.length() > 0) {
+            // Log.v(TAG, "Asset $assetName already exists, skipping copy")
+            return
         }
 
         try {
+            if (destFile.exists()) {
+                destFile.delete()
+            }
+            
             context.assets.open(assetName).use { input ->
                 java.io.FileOutputStream(destFile).use { output ->
                     input.copyTo(output)

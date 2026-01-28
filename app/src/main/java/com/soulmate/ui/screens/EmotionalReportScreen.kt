@@ -297,7 +297,25 @@ private fun EmotionTrendChart(trend: List<Pair<Long, Float>>) {
     ) {
         if (trend.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("暂无数据", color = SoulMateTheme.colors.textSecondary)
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        imageVector = Icons.Default.DateRange,
+                        contentDescription = null,
+                        tint = SoulMateTheme.colors.textSecondary.copy(alpha = 0.5f),
+                        modifier = Modifier.size(32.dp)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "暂无情绪数据",
+                        color = SoulMateTheme.colors.textSecondary,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        "开始对话后将自动记录",
+                        color = SoulMateTheme.colors.textSecondary.copy(alpha = 0.6f),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
             }
             return@GlassBubble
         }
@@ -337,7 +355,28 @@ private fun EmotionTrendChart(trend: List<Pair<Long, Float>>) {
                 strokeWidth = 2f
             )
 
-            if (points.size < 2) return@Canvas
+            // 单点情况：只画一个点和标签
+            if (points.size == 1) {
+                val score = points[0]
+                val normalizedY = 1f - (score - minScore) / range
+                val x = width / 2  // 居中显示
+                val y = normalizedY * height
+                
+                // Draw larger point for single data
+                drawCircle(
+                    color = if (score >= 0) Color(0xFF4CAF50) else Color(0xFFF44336),
+                    radius = 8.dp.toPx(),
+                    center = Offset(x, y)
+                )
+                // Draw outer ring
+                drawCircle(
+                    color = Color.White.copy(alpha = 0.5f),
+                    radius = 12.dp.toPx(),
+                    center = Offset(x, y),
+                    style = Stroke(width = 2.dp.toPx())
+                )
+                return@Canvas
+            }
 
             val stepX = width / (points.size - 1)
             

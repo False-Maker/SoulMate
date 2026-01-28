@@ -157,13 +157,7 @@ class SettingsViewModel @Inject constructor(
      * 重置用户记忆（清除所有并重置为初始状态）
      */
     fun resetMemoryForUser(onSuccess: () -> Unit, onError: (String) -> Unit) {
-        // Calculate "last year today"
-        // Current: 2026-01-25 -> Last year: 2025-01-25
-        val calendar = java.util.Calendar.getInstance()
-        calendar.add(java.util.Calendar.YEAR, -1)
-        val dateFormat = java.text.SimpleDateFormat("yyyy年MM月dd日", java.util.Locale.CHINA)
-        val dateStr = dateFormat.format(calendar.time)
-        val memoryText = "第一次见面时间是$dateStr"
+
 
         viewModelScope.launch(Dispatchers.IO) {
             try {

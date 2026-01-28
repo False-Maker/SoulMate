@@ -353,7 +353,7 @@ fun SettingsScreen(
                      onClick = {
                          viewModel.resetMemoryForUser(
                              onSuccess = {
-                                 Toast.makeText(context, "记忆重置成功：第一次见面是去年今天", Toast.LENGTH_LONG).show()
+                                 Toast.makeText(context, "记忆重置成功！", Toast.LENGTH_LONG).show()
                              },
                              onError = { msg ->
                                  Toast.makeText(context, "重置失败：$msg", Toast.LENGTH_SHORT).show()

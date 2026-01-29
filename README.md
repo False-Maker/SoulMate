@@ -127,7 +127,7 @@ com.soulmate/
 ## 📄 社区支持 (Community & Support)
 
 *   **[📜 贡献指南 (Contributing)](CONTRIBUTING.md)**: 欢迎任何形式的 PR 和 Issue。
-*   **[⚖️ 开源协议 (License)](LICENSE)**: 基于 MIT 协议发布。
+*   **[⚖️ 开源协议 (License)](LICENSE.md)**: 基于 MIT 协议发布。
 *   **[🛠️ 变更日志 (Changelog)](CHANGELOG.md)**: 查看最新版本动态。
 
 ---

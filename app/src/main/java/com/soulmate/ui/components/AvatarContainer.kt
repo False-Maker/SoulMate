@@ -186,20 +186,12 @@ fun AvatarContainer(
             Log.d(TAG, "[cid=$containerId] >>> LIFECYCLE_EVENT | event=$event")
             when (event) {
                 Lifecycle.Event.ON_START -> {
-                    // 重新进入页面（或后台返回），如果 Session 已销毁，则重新绑定
-                    // 注意：由于现在 bind 是 suspend，我们不能在 observer 中直接调用
-                    // 这里依靠 SideEffect 或者简单的 resume 逻辑
-                    // 实际上，如果 View还在，LaunchEffect 协程scope应该还在，或者会重建
-                    // 对于简单的 resume (不涉及网络/重连)，同步调用 resume() 即可
+                    // 重新进入页面（或后台返回）
                     if (containerRef != null && !avatarCoreService.isInitialized()) {
-                        Log.i(TAG, "[cid=$containerId] --- LIFECYCLE_START_REBIND_HINT")
-                        // 这里比较麻烦，因为 bind 是 suspend，无法在 EventObserver 中直接调用。
-                        // 简单的做法是重置 lastBoundGender，触发 LaunchedEffect 重新执行
-                        // lastBoundGender = null // 这会导致重组并触发 LaunchedEffect
-                        // 但由于我们在 DisposableEffect 内部，修状态可能不安全或无效
-                        // 更好的方式：AvatarCoreService.resume() 对于已初始化的情况足够
-                        // 对于未初始化的情况（被杀后台？），通常整个 Composable 会重建，走完整流程
-                        avatarCoreService.resume()
+                        Log.i(TAG, "[cid=$containerId] --- LIFECYCLE_START_REBIND_HINT | Not initialized, triggering rebind")
+                        // 强制触发 LaunchedEffect 重新绑定
+                        // 通过将 lastBoundGender 置空，使得下一次 LaunchedEffect 认为状态不一致从而重新执行绑定逻辑
+                        lastBoundGender = null 
                     } else {
                         avatarCoreService.resume()
                     }

@@ -24,7 +24,7 @@ data class PersonaConfig(
     val userNickname: String = "路西安",
     
     @SerializedName("relationship")
-    val relationship: RelationshipType = RelationshipType.COMPANION
+    val relationship: RelationshipType = RelationshipType.LOVER
 )
 
 enum class RelationshipType {

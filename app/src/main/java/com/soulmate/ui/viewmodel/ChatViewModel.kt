@@ -253,6 +253,8 @@ class ChatViewModel @Inject constructor(
                         if (wasSpeaking && handsFreeMode.value && !_isVoiceInputActive.value) {
                             Log.d(TAG, "Hands-free mode: auto-restart voice recognition")
                             wasSpeaking = false
+                            // Add a small delay to ensure audio focus is released
+                            kotlinx.coroutines.delay(200)
                             startVoiceInput()
                         }
                     }
@@ -263,12 +265,25 @@ class ChatViewModel @Inject constructor(
 
         // Collect ASR state for error handling
         viewModelScope.launch {
+        // Collect ASR state for error handling and state sync
+        viewModelScope.launch {
             asrService.asrState.collect { state ->
-                if (state is ASRState.Error) {
-                    _chatState.update { it.copy(error = state.message) }
-                    _isVoiceInputActive.value = false
+                when (state) {
+                    is ASRState.Error -> {
+                        _chatState.update { it.copy(error = state.message) }
+                        _isVoiceInputActive.value = false
+                    }
+                    is ASRState.Idle -> {
+                        // Crucial for Hands-Free Loop: Reset active state when ASR stops naturally
+                        if (_isVoiceInputActive.value) {
+                             Log.d(TAG, "ASR State Idle -> syncing UI state to false")
+                            _isVoiceInputActive.value = false
+                        }
+                    }
+                    else -> {}
                 }
             }
+        }
         }
         
         // Collect UIEvent from Avatar SDK for memory card popup

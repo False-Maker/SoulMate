@@ -73,6 +73,10 @@ class AliyunASRService @Inject constructor(
     private var isInitialized = false
     private var audioRecorder: AudioRecord? = null
     private var isRecording = false
+
+    // Voice activity state for Barge-in
+    private val _voiceActivityState = MutableSharedFlow<VoiceState>(extraBufferCapacity = 10)
+    val voiceActivityState: SharedFlow<VoiceState> = _voiceActivityState.asSharedFlow()
     
     // 保存最后的部分识别结果，用于在无法获取最终结果时作为备份
     private var lastPartialResult: String = ""
@@ -418,6 +422,20 @@ class AliyunASRService @Inject constructor(
                 _asrState.value = ASRState.Error("识别错误: $resultCode")
             }
             
+            Constants.NuiEvent.EVENT_VAD_START -> {
+                Log.i(TAG, "User voice detected (VAD_START)")
+                serviceScope.launch {
+                    _voiceActivityState.emit(VoiceState.SPEAKING)
+                }
+            }
+
+            Constants.NuiEvent.EVENT_VAD_END -> {
+                Log.d(TAG, "User voice ended (VAD_END)")
+                serviceScope.launch {
+                    _voiceActivityState.emit(VoiceState.SILENT)
+                }
+            }
+
             else -> {
                 Log.d(TAG, "Other event: $event")
             }
@@ -537,7 +555,7 @@ class AliyunASRService @Inject constructor(
             )
 
             audioRecorder = AudioRecord(
-                MediaRecorder.AudioSource.MIC,
+                MediaRecorder.AudioSource.VOICE_COMMUNICATION,
                 SAMPLE_RATE,
                 CHANNEL_CONFIG,
                 AUDIO_FORMAT,
@@ -799,4 +817,12 @@ sealed class ASRState {
     object Listening : ASRState()
     object Recognizing : ASRState()
     data class Error(val message: String) : ASRState()
+}
+
+/**
+ * VoiceState - 用户语音活动状态
+ */
+enum class VoiceState {
+    SILENT,
+    SPEAKING
 }

@@ -265,6 +265,17 @@ fun DigitalHumanScreen(
                         onHandsFreeStateChanged = { isLocked ->
                             viewModel.setHandsFreeMode(isLocked)
                         }
+                        
+                        // 连接录音回调 (仅恢复基础长按录音)
+                        onStartRecording = {
+                            viewModel.startVoiceInput()
+                        }
+                        onStopRecording = {
+                            viewModel.stopVoiceInput()
+                        }
+                        onCancelRecording = {
+                            viewModel.cancelVoiceInput()
+                        }
                     }
                 },
                 modifier = Modifier.fillMaxWidth()

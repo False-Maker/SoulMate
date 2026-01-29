@@ -96,9 +96,11 @@ class SoulmateInputCapsule @JvmOverloads constructor(
     // 监听器
     var onSendListener: OnSendListener? = null
     var onHandsFreeStateChanged: ((Boolean) -> Unit)? = null // Flow Mode 状态变化回调
+    var onStartRecording: (() -> Unit)? = null
+    var onStopRecording: (() -> Unit)? = null
+    var onCancelRecording: (() -> Unit)? = null
 
-    // 录音相关 (占位)
-    private var mediaRecorder: MediaRecorder? = null
+    // 录音相关 (UI state only, logic delegated)
     private var voiceStartTime: Long = 0
 
     // 上滑/拖拽发送相关
@@ -481,11 +483,8 @@ class SoulmateInputCapsule @JvmOverloads constructor(
         // UI 反馈：变红
         (btnAction.background as GradientDrawable).setColor(Color.RED)
         
-        // 实际录音逻辑 (MediaRecorder) 占位
-        // try {
-        //     mediaRecorder = MediaRecorder().apply { ... }
-        //     mediaRecorder?.start()
-        // } catch (e: Exception) { ... }
+        // 触发外部录音
+        onStartRecording?.invoke()
     }
 
     private fun stopVoiceRecording() {
@@ -499,13 +498,13 @@ class SoulmateInputCapsule @JvmOverloads constructor(
         val duration = System.currentTimeMillis() - voiceStartTime
         if (duration < 500) {
             Toast.makeText(context, "说话时间太短", Toast.LENGTH_SHORT).show()
+            // Even if short, we should signal stop/cancel to clean up
+            onCancelRecording?.invoke()
             return
         }
 
-        // 模拟 STT (语音转文字)
-        val simulatedText = "这是模拟的语音转写文本"
-        inputEditText.setText(inputEditText.text.toString() + simulatedText)
-        inputEditText.setSelection(inputEditText.text.length)
+        // 触发外部结束录音
+        onStopRecording?.invoke()
     }
 
     private fun cancelVoiceRecording() {
@@ -513,6 +512,9 @@ class SoulmateInputCapsule @JvmOverloads constructor(
         inputEditText.hint = "输入消息..."
         updateActionButtonState()
         Toast.makeText(context, "录音取消", Toast.LENGTH_SHORT).show()
+        
+        // 触发外部取消
+        onCancelRecording?.invoke()
     }
 
     // --- Flow Mode (Hands-free Lock) ---

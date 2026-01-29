@@ -187,7 +187,9 @@ fun SettingsScreen(
                             "女" -> UserGender.FEMALE
                             else -> UserGender.UNSET
                         }
+                        // Explicitly update ViewModel
                         viewModel.updateUserGender(newGender)
+                        // Note: Because userGender is collected as State, UI will update automatically
                     }
                 )
                 

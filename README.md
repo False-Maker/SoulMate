@@ -76,6 +76,8 @@
 
 ## 🚀 快速连接 (Quick Start)
 
+为了更详细地了解如何配置和启动项目，请参阅我们的 **[🚀 项目启动手册 (Getting Started Guide)](docs/GETTING_STARTED.md)**。
+
 ### 1. 注入灵气 (`local.properties`)
 
 ```properties
@@ -119,6 +121,14 @@ com.soulmate/
     ├── components/        # Synesthesia Orb, Glass UI
     └── viewmodel/         # Soul Logic
 ```
+
+---
+
+## 📄 社区支持 (Community & Support)
+
+*   **[📜 贡献指南 (Contributing)](CONTRIBUTING.md)**: 欢迎任何形式的 PR 和 Issue。
+*   **[⚖️ 开源协议 (License)](LICENSE)**: 基于 MIT 协议发布。
+*   **[🛠️ 变更日志 (Changelog)](CHANGELOG.md)**: 查看最新版本动态。
 
 ---
 

@@ -1,25 +1,25 @@
-# Changelog
+# 变更日志
 
-All notable changes to this project will be documented in this file.
+本项目的所有重大变更都将记录在此文件中。
 
 ## [1.3.0] - 2026-01-30
-### Added
-- **Digital Human Abstraction**: Introduced `IAvatarDriver` interface to decouple business logic from specific SDKs.
-- **Xmov Driver**: Implementation of `XmovAvatarDriver`.
-- **MindWatch 2.0**: Persistent emotion storage using ObjectBox and refined status logic.
-- **Barge-in Support**: Full-duplex interruption based on ASR VAD signals.
-- **Standard Docs**: Added `GETTING_STARTED.md`, `CONTRIBUTING.md`, `LICENSE`, etc.
+### 新增
+- **数字人抽象层**：引入 `IAvatarDriver` 接口，将业务逻辑与特定 SDK 解耦。
+- **Xmov 驱动**：实现了 `XmovAvatarDriver`。
+- **心识守望 (MindWatch) 2.0**：使用 ObjectBox 实现情绪数据的持久化存储，并优化了状态逻辑。
+- **智能打断支持**：基于 ASR VAD 信号实现全双工语音打断。
+- **标准文档**：新增了 `GETTING_STARTED.md`、`CONTRIBUTING.md`、`LICENSE` 等。
 
-### Fixed
-- **ASR Reliability**: Implemented silent recovery for `240007` initialization errors.
-- **Resource Management**: Lifecycle-aware cleanup for digital human assets.
+### 修复
+- **ASR 稳定性**：针对 `240007` 初始化错误实现了静默恢复机制。
+- **资源管理**：实现了数字人资产的生命周期感知型清理。
 
 ## [1.2.0] - 2026-01-15
-### Added
-- Initial implementation of MindWatch.
-- Basic RAG (Retrieval-Augmented Generation) for memory retrieval.
-- Material 3 Glassmorphism UI.
+### 新增
+- 初步实现 MindWatch 心灵守护功能。
+- 为记忆检索实现基础版 RAG（检索增强生成）。
+- Material 3 玻璃拟态 UI 风格。
 
 ## [1.0.0] - 2025-12-01
-- Project initialized.
-- Integration with Doubao LLM and Aliyun ASR.
+- 项目初始化。
+- 集成豆包 LLM 和阿里云 ASR 服务。

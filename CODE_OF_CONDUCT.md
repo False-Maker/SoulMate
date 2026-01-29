@@ -1,23 +1,23 @@
-# Contributor Covenant Code of Conduct
+# 贡献者公约行为准则
 
-## Our Pledge
+## 我们的誓言
 
-In the interest of fostering an open and welcoming environment, we as contributors and maintainers pledge to making participation in our project and our community a harassment-free experience for everyone, regardless of age, body size, disability, ethnicity, gender identity and expression, level of experience, nationality, personal appearance, race, religion, or sexual identity and orientation.
+为了培养一个开放、友好、欢迎参与的环境，作为贡献者和维护者，我们誓言让参与本项目和我们社区的每个人都享受到无骚扰的体验，无论其年龄、体型、残疾、种族、性别认同和表达、经验水平、国籍、个人形象、人种、宗教或性认同和性取向如何。
 
-## Our Standards
+## 我们的标准
 
-Examples of behavior that contributes to creating a positive environment include:
+有助于创造积极环境的行为示例包括：
 
-* Using welcoming and inclusive language
-* Being respectful of differing viewpoints and experiences
-* Gracefully accepting constructive criticism
-* Focusing on what is best for the community
-* Showing empathy towards other community members
+*   使用欢迎和包容的语言
+*   尊重不同的观点和经历
+*   优雅地接受建设性的批评
+*   专注于对社区最好的选择
+*   对其他社区成员表现出共情
 
-## Enforcement
+## 执行
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported by contacting the project team. All complaints will be reviewed and investigated and will result in a response that is deemed necessary and appropriate to the circumstances. The project team is obligated to maintain confidentiality with regard to the reporter of an incident.
+滥用、骚扰或其他不可接受的行为可以向项目团队报告。所有投诉都将得到审查和调查，并将产生被认为必要且适应情况的响应。项目团队有义务对事故报告者的信息保密。
 
 ---
 
-*This Code of Conduct is adapted from the [Contributor Covenant](http://contributor-covenant.org), version 1.4, available at [http://contributor-covenant.org/version/1/4/](http://contributor-covenant.org/version/1/4/)*
+*本行为准则改编自 [贡献者公约 (Contributor Covenant)](http://contributor-covenant.org) 1.4 版，详见 [http://contributor-covenant.org/version/1/4/](http://contributor-covenant.org/version/1/4/)*

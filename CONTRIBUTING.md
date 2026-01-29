@@ -1,36 +1,36 @@
-# Contributing to SoulMate
+# 参与贡献
 
-First off, thank you for considering contributing to SoulMate! It's people like you that make SoulMate such a great tool.
+首先，感谢你考虑为 SoulMate 贡献力量！正是有了像你这样的人，才让 SoulMate 变得如此出色。
 
-## Code of Conduct
+## 行为准则
 
-By participating in this project, you are expected to uphold our [Code of Conduct](CODE_OF_CONDUCT.md).
+参与本项目即代表你同意遵守我们的 [行为准则](CODE_OF_CONDUCT.md)。
 
-## How Can I Contribute?
+## 我该如何贡献？
 
-### Reporting Bugs
+### 报告 Bug
 
-*   **Use the GitHub Issue Tracker**: Check if the bug has already been reported.
-*   **Provide Details**: Include steps to reproduce, expected behavior, and actual behavior.
-*   **Attach Logs**: Provide Logcat output if possible.
+*   **使用 GitHub Issue 追踪器**：检查该 Bug 是否已被报告。
+*   **提供详细信息**：包括复现步骤、预期行为和实际行为。
+*   **附上日志**：尽可能提供 Logcat 输出。
 
-### Suggesting Enhancements
+### 提出改进建议
 
-*   **Open an Issue**: Explain why the enhancement would be useful.
-*   **Discuss**: Wait for feedback before starting any major work.
+*   **开启一个 Issue**：解释为什么这个改进很有用。
+*   **进行讨论**：在开始任何重大工作之前，请等待反馈。
 
-### Pull Requests
+### 提交合并请求 (Pull Requests)
 
-1.  Fork the repo and create your branch from `main`.
-2.  If you've added code that should be tested, add tests.
-3.  Ensure the test suite passes.
-4.  Make sure your code follows the existing style.
-5.  Issue that Pull Request!
+1.  Fork 本仓库并从 `main` 分支创建你的功能分支。
+2.  如果你添加的代码需要测试，请添加测试用例。
+3.  确保所有测试都能通过。
+4.  确保你的代码符合现有的代码风格。
+5.  提交 Pull Request！
 
-## Style Guide
+## 代码风格指南
 
-*   Use Kotlin style guidelines.
-*   Write clear, documented code.
-*   Keep commit messages descriptive.
+*   使用 Kotlin 官方代码风格指南。
+*   编写清晰、有文档注释的代码。
+*   提交信息（Commit Message）需具有描述性。
 
-Thank you!
+谢谢！

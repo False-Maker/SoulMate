@@ -2,6 +2,23 @@ package com.soulmate.ui.state
 
 import java.util.UUID
 
+sealed class UIWidgetData {
+    data class MemoryCapsule(
+        val date: String,
+        val summary: String,
+        val imageUrls: List<String>
+    ) : UIWidgetData()
+
+    data class BreathingGuide(
+        val durationSeconds: Int
+    ) : UIWidgetData()
+
+    data class DecisionOptions(
+        val title: String,
+        val options: List<String>
+    ) : UIWidgetData()
+}
+
 /**
  * Data class representing a single chat message in the UI.
  *
@@ -18,5 +35,6 @@ data class ChatMessage(
     val isFromUser: Boolean,
     val timestamp: Long = System.currentTimeMillis(),
     val imageUrl: String? = null,
-    val localImageUri: String? = null
+    val localImageUri: String? = null,
+    val uiWidget: UIWidgetData? = null
 )

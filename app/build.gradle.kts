@@ -25,15 +25,6 @@ android {
         buildConfigField("String", "GEMINI_API_KEY", "\"${localProperties.getProperty("GEMINI_API_KEY") ?: ""}\"")
         buildConfigField("String", "OPENAI_API_KEY", "\"${localProperties.getProperty("OPENAI_API_KEY") ?: ""}\"")
         
-        // Xmov Digital Human SDK - 女性数字人 (默认)
-        buildConfigField("String", "XMOV_APP_ID", "\"${localProperties.getProperty("XMOV_APP_ID") ?: ""}\"")
-        buildConfigField("String", "XMOV_APP_SECRET", "\"${localProperties.getProperty("XMOV_APP_SECRET") ?: ""}\"")
-        // Xmov Digital Human SDK - 男性数字人 (给女性用户看)
-        buildConfigField("String", "XMOV_APP_ID_MALE", "\"${localProperties.getProperty("XMOV_APP_ID_MALE") ?: ""}\"")
-        buildConfigField("String", "XMOV_APP_SECRET_MALE", "\"${localProperties.getProperty("XMOV_APP_SECRET_MALE") ?: ""}\"")
-        // Xmov Gateway URL (可配置)
-        buildConfigField("String", "XMOV_GATEWAY_URL", "\"${localProperties.getProperty("XMOV_GATEWAY_URL") ?: "https://nebula-agent.xingyun3d.com/user/v1/ttsa/session"}\"")
-        
         // Doubao LLM (火山引擎方舟)
         buildConfigField("String", "DOUBAO_API_KEY", "\"${localProperties.getProperty("DOUBAO_API_KEY") ?: ""}\"")
         buildConfigField("String", "DOUBAO_MODEL_ID", "\"${localProperties.getProperty("DOUBAO_MODEL_ID") ?: ""}\"")
@@ -108,14 +99,6 @@ android {
 }
 
 dependencies {
-    // Local AAR Library - Xmov Digital Human SDK
-    implementation(files("libs/xmovdigitalhuman-v0.0.1.aar"))
-    
-    // Xmov SDK required dependencies
-    implementation("javax.vecmath:vecmath:1.5.2")
-    implementation("org.msgpack:msgpack-core:0.9.3")
-    implementation("io.socket:socket.io-client:2.1.0")
-    
     // Aliyun NUI SDK for ASR
     implementation(files("libs/nuisdk-release.aar"))
     

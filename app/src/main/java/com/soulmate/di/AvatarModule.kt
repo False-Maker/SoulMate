@@ -1,7 +1,7 @@
 package com.soulmate.di
 
 import com.soulmate.core.data.avatar.IAvatarDriver
-import com.soulmate.data.avatar.XmovAvatarDriver
+import com.soulmate.data.avatar.OrbAvatarDriver
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -15,6 +15,6 @@ abstract class AvatarModule {
     @Binds
     @Singleton
     abstract fun bindAvatarDriver(
-        xmovAvatarDriver: XmovAvatarDriver
+        orbAvatarDriver: OrbAvatarDriver
     ): IAvatarDriver
 }

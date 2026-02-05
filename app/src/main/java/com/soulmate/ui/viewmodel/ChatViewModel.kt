@@ -27,6 +27,7 @@ import com.soulmate.data.service.ImageEncodingException
 import com.soulmate.data.service.VideoFrameExtractor
 import com.soulmate.data.service.VideoExtractionException
 import com.soulmate.data.model.UIEvent
+import com.soulmate.data.model.UIWidgetParser
 import com.soulmate.data.preferences.UserPreferencesRepository
 import com.soulmate.data.repository.AffinityRepository
 import com.soulmate.ui.state.ChatMessage
@@ -112,6 +113,7 @@ class ChatViewModel @Inject constructor(
     
     // Avatar Service for UI binding
     val avatarCoreService: AvatarCoreService get() = avatarService
+    val audioAmplitude = avatarService.audioAmplitude
     
     // Voice input text (partial recognition result)
     private val _voiceInputText = MutableStateFlow("")
@@ -412,14 +414,16 @@ class ChatViewModel @Inject constructor(
                 .distinctUntilChanged()  // B2) 降噪：列表内容不变时不重复发射
                 .collect { entities ->
                     val uiMessages = entities.map { entity ->
+                        val parsed = UIWidgetParser.parse(entity.content)
                         ChatMessage(
                             // A1) 使用 DB entity.id 作为稳定 Key，避免 UUID 每次变化导致全量刷新
                             id = entity.id.toString(),
-                            content = entity.content,
+                            content = parsed.cleanText,
                             isFromUser = entity.role == "user",
                             timestamp = entity.timestamp,
                             imageUrl = entity.imageUrl,
-                            localImageUri = entity.localImageUri
+                            localImageUri = entity.localImageUri,
+                            uiWidget = parsed.widget
                         )
                     }
                     _chatState.update { state ->
@@ -715,7 +719,8 @@ class ChatViewModel @Inject constructor(
                     }
 
                     // Parse emotion and gesture tags from LLM response
-                    val parsed = EmotionGestureParser.parse(finalResponse)
+                    val widgetParsed = UIWidgetParser.parse(finalResponse)
+                    val parsed = EmotionGestureParser.parse(widgetParsed.cleanText)
                     // 日志降噪：只在有变化时输出情绪和动作
                     if (parsed.emotion != "neutral" || parsed.gesture != "nod") {
                         Log.d(TAG, "Parsed emotion: ${parsed.emotion}, gesture: ${parsed.gesture}")
@@ -1042,7 +1047,8 @@ class ChatViewModel @Inject constructor(
                     }
                     
                     // Parse emotion and gesture tags
-                    val parsed = EmotionGestureParser.parse(finalResponse)
+                    val widgetParsed = UIWidgetParser.parse(finalResponse)
+                    val parsed = EmotionGestureParser.parse(widgetParsed.cleanText)
                     // 日志降噪：只在有变化时输出情绪和动作
                     if (parsed.emotion != "neutral" || parsed.gesture != "nod") {
                         Log.d(TAG, "Parsed emotion: ${parsed.emotion}, gesture: ${parsed.gesture}")

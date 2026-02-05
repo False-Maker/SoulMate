@@ -66,6 +66,37 @@ object PersonaConstants {
 - 用户说"下周五我要去考试" -> 不输出（不是纪念日）
 
 务必严格遵守此格式。"""
+
+    private const val GENERATIVE_UI_INSTRUCTIONS = """
+[Ability: Generative UI]
+You can generate native UI widgets to display structured information richer than text.
+To trigger a widget, include a strictly formatted JSON block in your response. The App will parse it and render the widget.
+
+Supported Widgets:
+
+1. Memory Capsule (Use when recalling past events/conversations):
+Format:
+{
+  "widget": "memory_capsule",
+  "data": {
+    "date": "YYYY-MM-DD",
+    "summary": "Brief summary of the memory...",
+    "images": ["url1", "url2"]
+  }
+}
+
+2. Decision Options (Use when suggesting choices or plans):
+Format:
+{
+  "widget": "decision_options",
+  "data": {
+    "title": "Question title?",
+    "options": ["Option A", "Option B", "Option C"]
+  }
+}
+
+Rule: You can mix text and JSON. The JSON will be extracted and rendered as a card below your text.
+"""
     
     /**
      * Level 1: 陌生人 (Score 0-199)
@@ -298,7 +329,7 @@ $RESPONSE_FORMAT_TEMPLATE"""
      */
     fun buildPrompt(config: PersonaConfig, level: Int): String {
         val template = getPromptByLevel(level)
-        return replacePlaceholders(template, config)
+        return appendGenerativeUi(replacePlaceholders(template, config))
     }
 
     /**
@@ -306,7 +337,11 @@ $RESPONSE_FORMAT_TEMPLATE"""
      */
     fun buildPrompt(config: PersonaConfig, affinityScore: Int, intimacyScore: Int): String {
         val template = getPromptByAffinity(affinityScore, intimacyScore)
-        return replacePlaceholders(template, config)
+        return appendGenerativeUi(replacePlaceholders(template, config))
+    }
+
+    private fun appendGenerativeUi(prompt: String): String {
+        return "$prompt\n\n$GENERATIVE_UI_INSTRUCTIONS"
     }
 
     private fun replacePlaceholders(template: String, config: PersonaConfig): String {

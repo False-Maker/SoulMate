@@ -43,6 +43,9 @@ class AvatarCoreService @Inject constructor(
     
     private val _uiEventFlow = MutableSharedFlow<UIEvent>(extraBufferCapacity = 10)
     val uiEventFlow: SharedFlow<UIEvent> = _uiEventFlow.asSharedFlow()
+
+    val audioAmplitude: StateFlow<Float>
+        get() = avatarDriver.audioAmplitude
     
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -95,7 +98,6 @@ class AvatarCoreService @Inject constructor(
         // Driver manages cache, but interface doesn't expose clearCache.
         // Assuming Driver handles recovery automatically.
         // If we need manual clear, we need to add it to interface or cast (bad).
-        // XmovAvatarDriver has recovery logic.
         // For now, log and skip, or if critical, update interface.
         Log.w(TAG, "clearAvatarCache requested but not exposed by driver")
         return false

@@ -54,7 +54,7 @@ private const val REBIND_DEBOUNCE_MS_FAST = 100L
 /**
  * AvatarContainer - 数字人显示容器组件
  * 
- * 这个 Composable 使用 AndroidView 来桥接 Xmov SDK 的原生 View 需求。
+ * 这个 Composable 使用 AndroidView 来桥接 Avatar SDK 的原生 View 需求。
  * 它负责：
  * 1. 创建 FrameLayout 容器供 SDK 渲染
  * 2. 调用 AvatarCoreService.bind() 进行绑定
@@ -315,4 +315,3 @@ fun AvatarContainer(
         }
     )
 }
-

@@ -25,15 +25,6 @@
 # Keep LangChain4j
 -keep class dev.langchain4j.** { *; }
 
-# Xmov Digital Human SDK
--keep public class com.xmov.metahuman.sdk.data.* { *; }
--keep public class com.xmov.metahuman.sdk.impl.data.* { *; }
--keep public class com.xmov.metahuman.sdk.impl.transport.http.* { *; }
--keep public interface com.xmov.metahuman.sdk.IXmovAvatar { *; }
--keep class com.xmov.metahuman.sdk.IXmovAvatar$Companion { *; }
--keep public interface com.xmov.metahuman.sdk.IAvatarListener { public protected *; }
--keep public interface com.xmov.metahuman.sdk.PreCacheListener { public protected *; }
-
 # Aliyun NUI SDK (ASR)
 -keep class com.alibaba.idst.nui.* { *; }
 

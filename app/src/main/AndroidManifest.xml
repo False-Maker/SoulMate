@@ -43,18 +43,6 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".ui.test.ASRTestActivity"
-            android:exported="true"
-            android:label="ASR Test"
-            android:theme="@style/Theme.SoulMate"/>
-
-        <activity
-            android:name=".ui.test.EmbeddingTestActivity"
-            android:exported="true"
-            android:label="Embedding Test"
-            android:theme="@style/Theme.SoulMate"/>
-        
         <!-- FileProvider for sharing exported PDF files -->
         <provider
             android:name="androidx.core.content.FileProvider"

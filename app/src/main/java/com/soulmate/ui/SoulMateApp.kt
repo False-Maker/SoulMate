@@ -22,7 +22,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.soulmate.ui.navigation.Screen
 // import com.soulmate.ui.screens.ChatScreen
-import com.soulmate.ui.screens.HomeScreen
 import com.soulmate.ui.screens.MemoryGardenScreen
 import com.soulmate.ui.screens.OnboardingScreen
 import com.soulmate.ui.screens.SettingsScreen

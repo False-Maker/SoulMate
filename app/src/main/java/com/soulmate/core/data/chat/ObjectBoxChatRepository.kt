@@ -8,6 +8,8 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.withContext
+import com.soulmate.data.model.UIWidgetParser
+import com.soulmate.ui.state.ChatMessage
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -88,14 +90,21 @@ class ObjectBoxChatRepository @Inject constructor(
         localImageUri: String?,
         localVideoUri: String?
     ): Long = withContext(Dispatchers.IO) {
-        val message = ChatMessageEntity(
-            sessionId = sessionId,
-            role = role,
+        val now = System.currentTimeMillis()
+        val widget = UIWidgetParser.parse(rawContent ?: content).widget
+        val uiMessage = ChatMessage(
             content = content,
-            rawContent = rawContent,
-            timestamp = System.currentTimeMillis(),
+            isFromUser = role == "user",
+            timestamp = now,
             imageUrl = imageUrl,
             localImageUri = localImageUri,
+            uiWidget = widget
+        )
+        val message = ChatMessageEntity.fromUiModel(
+            sessionId = sessionId,
+            role = role,
+            message = uiMessage,
+            rawContent = rawContent,
             localVideoUri = localVideoUri
         )
         val messageId = messageBox.put(message)
@@ -164,4 +173,3 @@ class ObjectBoxChatRepository @Inject constructor(
         }
     }
 }
-

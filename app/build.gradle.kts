@@ -101,6 +101,10 @@ android {
 dependencies {
     // Aliyun NUI SDK for ASR
     implementation(files("libs/nuisdk-release.aar"))
+    // implementation(files("libs/xmovdigitalhuman-v0.0.1.aar"))
+    // implementation("javax.vecmath:vecmath:1.5.2")
+    // implementation("org.msgpack:msgpack-core:0.9.3")
+    // implementation("io.socket:socket.io-client:2.1.0")
     
     // Core Android
     implementation(libs.androidx.core.ktx)

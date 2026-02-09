@@ -16,6 +16,39 @@ object UIWidgetParser {
         setOf(RegexOption.DOT_MATCHES_ALL)
     )
 
+    fun parseJson(json: String?): UIWidgetData? {
+        if (json.isNullOrBlank()) return null
+        return parseWidget(json)
+    }
+
+    fun toJson(widget: UIWidgetData?): String? {
+        if (widget == null) return null
+        val payload = when (widget) {
+            is UIWidgetData.MemoryCapsule -> mapOf(
+                "widget" to "memory_capsule",
+                "data" to mapOf(
+                    "date" to widget.date,
+                    "summary" to widget.summary,
+                    "images" to widget.imageUrls
+                )
+            )
+            is UIWidgetData.DecisionOptions -> mapOf(
+                "widget" to "decision_options",
+                "data" to mapOf(
+                    "title" to widget.title,
+                    "options" to widget.options
+                )
+            )
+            is UIWidgetData.BreathingGuide -> mapOf(
+                "widget" to "breathing_guide",
+                "data" to mapOf(
+                    "duration_seconds" to widget.durationSeconds
+                )
+            )
+        }
+        return gson.toJson(payload)
+    }
+
     fun parse(rawText: String): ParsedResult {
         val match = widgetPattern.find(rawText) ?: return ParsedResult(rawText, null)
         val jsonStr = match.value

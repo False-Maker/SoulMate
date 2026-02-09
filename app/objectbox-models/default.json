@@ -112,7 +112,7 @@
     },
     {
       "id": "3:9090402594486833758",
-      "lastPropertyId": "9:7057078024124937636",
+      "lastPropertyId": "10:8262892983596800668",
       "name": "ChatMessageEntity",
       "properties": [
         {
@@ -163,6 +163,11 @@
         {
           "id": "9:7057078024124937636",
           "name": "localVideoUri",
+          "type": 9
+        },
+        {
+          "id": "10:8262892983596800668",
+          "name": "uiWidgetJson",
           "type": 9
         }
       ],

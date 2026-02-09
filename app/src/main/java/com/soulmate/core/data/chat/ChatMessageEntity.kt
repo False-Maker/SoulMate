@@ -1,5 +1,7 @@
 package com.soulmate.core.data.chat
 
+import com.soulmate.data.model.UIWidgetParser
+import com.soulmate.ui.state.ChatMessage
 import io.objectbox.annotation.Entity
 import io.objectbox.annotation.Id
 import io.objectbox.annotation.Index
@@ -38,6 +40,40 @@ data class ChatMessageEntity(
     var localImageUri: String? = null,
 
     /** 本地视频 URI（可选，用于用户发送的本地视频） */
-    var localVideoUri: String? = null
-)
+    var localVideoUri: String? = null,
+    var uiWidgetJson: String? = null
+) {
+    fun toUiModel(): ChatMessage {
+        return ChatMessage(
+            id = id.toString(),
+            content = content,
+            isFromUser = role == "user",
+            timestamp = timestamp,
+            imageUrl = imageUrl,
+            localImageUri = localImageUri,
+            uiWidget = UIWidgetParser.parseJson(uiWidgetJson)
+        )
+    }
 
+    companion object {
+        fun fromUiModel(
+            sessionId: Long,
+            role: String,
+            message: ChatMessage,
+            rawContent: String? = null,
+            localVideoUri: String? = null
+        ): ChatMessageEntity {
+            return ChatMessageEntity(
+                sessionId = sessionId,
+                role = role,
+                content = message.content,
+                rawContent = rawContent,
+                timestamp = message.timestamp,
+                imageUrl = message.imageUrl,
+                localImageUri = message.localImageUri,
+                localVideoUri = localVideoUri,
+                uiWidgetJson = UIWidgetParser.toJson(message.uiWidget)
+            )
+        }
+    }
+}

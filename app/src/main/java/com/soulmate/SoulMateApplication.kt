@@ -48,11 +48,8 @@ class SoulMateApplication : Application(), Configuration.Provider {
         // Schedule Heartbeat Worker
         scheduleHeartbeatWorker(workManager)
         
-        // Schedule Cleanup Worker for automatic data cleanup
+         // Schedule Cleanup Worker for automatic data cleanup
         CleanupWorker.schedule(this)
-        
-        // Note: Digital Human SDK is initialized in the UI layer (AvatarCoreService.bind)
-        // because it requires a ViewGroup container.
     }
     
     /**

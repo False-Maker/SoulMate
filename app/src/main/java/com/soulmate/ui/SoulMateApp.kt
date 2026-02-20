@@ -1,3 +1,4 @@
+﻿
 package com.soulmate.ui
 
 import androidx.compose.animation.AnimatedContentTransitionScope
@@ -21,16 +22,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.soulmate.ui.navigation.Screen
-// import com.soulmate.ui.screens.ChatScreen
 import com.soulmate.ui.screens.MemoryGardenScreen
 import com.soulmate.ui.screens.OnboardingScreen
 import com.soulmate.ui.screens.SettingsScreen
 import com.soulmate.ui.screens.SplashScreen
-import com.soulmate.ui.screens.DigitalHumanScreen
-import com.soulmate.ui.screens.CrisisResourceScreen
 import com.soulmate.ui.screens.CrisisResourceScreen
 import com.soulmate.ui.screens.EmotionalReportScreen
-import com.soulmate.ui.screens.ImmersiveFusionScreen
+import com.soulmate.ui.screens.ChatScreen
 import com.soulmate.ui.theme.SoulMateTheme
 import com.soulmate.ui.theme.SoulMateThemeMode
 import com.soulmate.ui.viewmodel.OnboardingViewModel
@@ -142,43 +140,18 @@ fun SoulMateApp(
                 )
             }
             
-            // Home Screen (Now Fusion Screen)
+            // Home Screen - 主界面使用 ChatScreen
             composable(Screen.Home.route) {
-                ImmersiveFusionScreen(
+                ChatScreen(
                     onNavigateBack = {
-                        // In Home/Fusion, back might exit app or go to bg
-                    },
-                    onNavigateToGarden = {
-                        navController.navigate(Screen.Garden.route) {
-                            launchSingleTop = true
-                        }
-                    },
-                    onNavigateToSettings = {
-                        navController.navigate(Screen.Settings.route) {
-                            launchSingleTop = true
-                        }
-                    },
-                    currentThemeMode = themeMode,
-                    onThemeChange = { newMode -> themeMode = newMode }
-                )
-            }
-
-            
-
-
-            // Chat Screen (Redirect to Digital Human as ChatScreen is removed)
-            composable(Screen.Chat.route) {
-                // Redirect to Digital Human
-                DigitalHumanScreen(
-                    onNavigateBack = {
-                        navController.popBackStack()
+                        // In Home, back might exit app or go to bg
                     }
                 )
             }
-            
-            // Digital Human Screen
-            composable(Screen.DigitalHuman.route) {
-                DigitalHumanScreen(
+
+            // Chat Screen - 聊天界面
+            composable(Screen.Chat.route) {
+                ChatScreen(
                     onNavigateBack = {
                         navController.popBackStack()
                     }
@@ -192,12 +165,9 @@ fun SoulMateApp(
                         navController.popBackStack()
                     },
                     onNavigateToChat = {
-                        // Redirect to Digital Human instead of Chat
-                        val popped = navController.popBackStack(Screen.DigitalHuman.route, false)
-                        if (!popped) {
-                            navController.navigate(Screen.DigitalHuman.route) {
-                                launchSingleTop = true
-                            }
+                        // Navigate to Chat screen
+                        navController.navigate(Screen.Chat.route) {
+                            launchSingleTop = true
                         }
                     }
                 )
@@ -227,27 +197,6 @@ fun SoulMateApp(
                 )
             }
             
-            // Immersive Fusion Screen (Main Hub)
-            composable(Screen.Fusion.route) {
-                ImmersiveFusionScreen(
-                    onNavigateBack = {
-                        navController.popBackStack()
-                    },
-                    onNavigateToGarden = {
-                        navController.navigate(Screen.Garden.route) {
-                            launchSingleTop = true
-                        }
-                    },
-                    onNavigateToSettings = {
-                        navController.navigate(Screen.Settings.route) {
-                            launchSingleTop = true
-                        }
-                    },
-                    currentThemeMode = themeMode,
-                    onThemeChange = { newMode -> themeMode = newMode }
-                )
-            }
-            
             // Emotional Report Screen
             composable(Screen.EmotionalReport.route) {
                 EmotionalReportScreen(
@@ -259,3 +208,4 @@ fun SoulMateApp(
         }
     }
 }
+

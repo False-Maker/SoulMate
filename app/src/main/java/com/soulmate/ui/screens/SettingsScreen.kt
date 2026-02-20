@@ -82,11 +82,7 @@ fun SettingsScreen(
             )
     ) {
         // 1. Background
-        ParticleBackground(
-            modifier = Modifier.fillMaxSize(),
-            particleColor = SoulMateTheme.colors.particleColor,
-            lineColor = SoulMateTheme.colors.cardBorder
-        )
+        Box(modifier = Modifier.fillMaxSize())
         
         // 2. Content
         Column(
@@ -201,33 +197,6 @@ fun SettingsScreen(
                     value = personaWarmth,
                     onValueChange = { viewModel.updatePersonaWarmth(it) }
                 )
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                // Clear Avatar Cache Button
-                val context = LocalContext.current
-                Button(
-                    onClick = { 
-                        val success = viewModel.clearAvatarCache()
-                        if (success) {
-                            Toast.makeText(context, "数字人缓存已清除，下次加载时将重新下载最新资源", Toast.LENGTH_LONG).show()
-                        } else {
-                            Toast.makeText(context, "清除缓存失败，请重试", Toast.LENGTH_SHORT).show()
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = SoulMateTheme.colors.cardBg.copy(alpha=0.5f),
-                        contentColor = SoulMateTheme.colors.accentColor
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text(
-                        text = "清除数字人缓存",
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-                }
             }
 
             // -- 2. Memory Module (Soul Vitality) --

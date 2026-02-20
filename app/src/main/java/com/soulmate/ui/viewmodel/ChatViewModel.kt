@@ -21,7 +21,6 @@ import com.soulmate.data.model.llm.content.TextPart
 import com.soulmate.data.service.EmotionGestureParser
 import com.soulmate.data.service.AliyunASRService
 import com.soulmate.data.service.ASRState
-import com.soulmate.data.service.AvatarCoreService
 import com.soulmate.data.service.ImageBase64Encoder
 import com.soulmate.data.service.ImageEncodingException
 import com.soulmate.data.service.VideoFrameExtractor
@@ -71,7 +70,6 @@ class ChatViewModel @Inject constructor(
     private val llmService: LLMService,
     private val imageGenService: ImageGenService,
     private val chatRepository: ChatRepository,
-    private val avatarService: AvatarCoreService,
     private val asrService: AliyunASRService,
     private val affinityRepository: AffinityRepository,
     private val intimacyManager: com.soulmate.data.memory.IntimacyManager,
@@ -110,11 +108,7 @@ class ChatViewModel @Inject constructor(
     
     // ASR State
     val asrState: StateFlow<ASRState> = asrService.asrState
-    
-    // Avatar Service for UI binding
-    val avatarCoreService: AvatarCoreService get() = avatarService
-    val audioAmplitude = avatarService.audioAmplitude
-    
+
     // Voice input text (partial recognition result)
     private val _voiceInputText = MutableStateFlow("")
     val voiceInputText: StateFlow<String> = _voiceInputText.asStateFlow()
@@ -214,17 +208,9 @@ class ChatViewModel @Inject constructor(
         }
         
         // Collect partial results for real-time display
-        // 打断功能：首次检测到 partial 时，如果数字人仍在说话，立即停止
         viewModelScope.launch {
             asrService.partialResult.collect { partialText ->
                 _voiceInputText.value = partialText
-                
-                // 打断：首次检测到用户说话时，停止数字人播报
-                if (partialText.isNotBlank() && 
-                    avatarService.avatarState.value is com.soulmate.data.service.AvatarState.Speaking) {
-                    Log.d(TAG, "Interrupting avatar on partial result: ${partialText.take(20)}...")
-                    avatarService.stopSpeaking()
-                }
             }
         }
         
@@ -238,35 +224,7 @@ class ChatViewModel @Inject constructor(
                 }
             }
         }
-        
-        // Collect Avatar state for error handling and hands-free mode
-        var wasSpeaking = false
-        viewModelScope.launch {
-            avatarService.avatarState.collect { state ->
-                when (state) {
-                    is com.soulmate.data.service.AvatarState.Error -> {
-                        _chatState.update { it.copy(error = state.msg) }
-                    }
-                    is com.soulmate.data.service.AvatarState.Speaking -> {
-                        wasSpeaking = true
-                    }
-                    is com.soulmate.data.service.AvatarState.Idle -> {
-                        // 免提模式：数字人说完后自动开始识别
-                        if (wasSpeaking && handsFreeMode.value && !_isVoiceInputActive.value) {
-                            Log.d(TAG, "Hands-free mode: auto-restart voice recognition")
-                            wasSpeaking = false
-                            // Add a small delay to ensure audio focus is released
-                            kotlinx.coroutines.delay(200)
-                            startVoiceInput()
-                        }
-                    }
-                    else -> {}
-                }
-            }
-        }
 
-        // Collect ASR state for error handling
-        viewModelScope.launch {
         // Collect ASR state for error handling and state sync
         viewModelScope.launch {
             asrService.asrState.collect { state ->
@@ -283,19 +241,6 @@ class ChatViewModel @Inject constructor(
                         }
                     }
                     else -> {}
-                }
-            }
-        }
-        }
-        
-        // Collect UIEvent from Avatar SDK for memory card popup
-        viewModelScope.launch {
-            avatarService.uiEventFlow.collect { event ->
-                Log.d(TAG, "Received UIEvent: type=${event.type}")
-                if (event.isVideoEvent || event.isPhotoEvent || event.isMemoryCardEvent) {
-                    _currentUIEvent.value = event
-                } else if (event.isCloseEvent) {
-                    _currentUIEvent.value = null
                 }
             }
         }
@@ -358,29 +303,8 @@ class ChatViewModel @Inject constructor(
                 return
             }
             
-            // 解析情感和动作
-            val content = latestMessage.rawContent ?: latestMessage.content
-            try {
-                // 如果有 rawContent (包含标签)，重新解析标签
-                // 如果只有 clean content，则作为纯文本处理
-                val parsed = if (latestMessage.rawContent != null) {
-                    EmotionGestureParser.parse(latestMessage.rawContent!!)
-                } else {
-                    EmotionGestureParser.parse(latestMessage.content)
-                }
-                
-                Log.d(TAG, "Auto-playing latest message: ${parsed.text.take(20)}...")
-                
-                // 驱动数字人
-                // 延迟一点点，确保 UI 先展示出来
-                kotlinx.coroutines.delay(500)
-                avatarService.setEmotion(parsed.emotion)
-                avatarService.playGesture(parsed.gesture)
-                avatarService.speak(parsed.text)
-                
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to parse/play latest message", e)
-            }
+            // Auto-play is disabled with avatar chat-only removal
+            Log.d(TAG, "Auto-play skipped - avatar service removed")
             
         } catch (e: Exception) {
             Log.e(TAG, "Error in checkAndPlayLatestMessage", e)
@@ -453,19 +377,11 @@ class ChatViewModel @Inject constructor(
     
     /**
      * Start voice input (ASR recognition).
-     * 
-     * 打断功能：开始语音输入时，立即停止数字人播报，避免抢话
      */
     fun startVoiceInput() {
         Log.d(TAG, "Starting voice input")
         _voiceInputText.value = ""
-        
-        // 打断：如果数字人正在说话，立即停止
-        if (avatarService.avatarState.value is com.soulmate.data.service.AvatarState.Speaking) {
-            Log.d(TAG, "Interrupting avatar speech")
-            avatarService.stopSpeaking()
-        }
-        
+
         // Ensure initialized
         viewModelScope.launch {
             if (!asrService.isInitialized()) {
@@ -474,13 +390,11 @@ class ChatViewModel @Inject constructor(
                     return@launch
                 }
             }
-            
-            // Start recognition on Main after init (nuiInstance methods are likely main-thread safe or handle it, but better safe)
+
+            // Start recognition on Main after init
             // Use hands-free mode setting to determine if VAD should be enabled
             if (asrService.startRecognition(enableAutoStop = handsFreeMode.value)) {
                 _isVoiceInputActive.value = true
-                // Set avatar to listening state
-                avatarService.startListening()
             }
         }
     }
@@ -580,7 +494,6 @@ class ChatViewModel @Inject constructor(
                 } catch (e: Exception) {
                     Log.e(TAG, "Failed to persist image gen prompt message", e)
                 }
-                avatarService.speak("我可以为你生成图片，需要确认一下吗？")
                 return@launch
             }
             
@@ -595,10 +508,7 @@ class ChatViewModel @Inject constructor(
             }
 
             try {
-                // 3. Trigger thinking state while waiting for LLM
-                avatarService.startThinking()
-                
-                // 4. 读取 RAG 配置
+                // 3. 读取 RAG 配置
                 val ragConfig = userPreferencesRepository.getRagConfig()
                 
                 // 5. 获取 history（最近 N 条消息）- 提前获取，用于计算 RAG 排除窗口
@@ -725,7 +635,7 @@ class ChatViewModel @Inject constructor(
                     if (parsed.emotion != "neutral" || parsed.gesture != "nod") {
                         Log.d(TAG, "Parsed emotion: ${parsed.emotion}, gesture: ${parsed.gesture}")
                     }
-                    
+
                     // Phase 1: 检测图片生成指令
                     val imageGenCommand = parseImageGenCommand(parsed.text)
                     if (imageGenCommand != null) {
@@ -733,21 +643,7 @@ class ChatViewModel @Inject constructor(
                         // 设置待确认状态，等待用户确认
                         _pendingImageGen.value = imageGenCommand
                     }
-                    
-                    // Drive avatar emotion and gesture
-                    avatarService.setEmotion(parsed.emotion)
-                    avatarService.playGesture(parsed.gesture)
-                    
-                    // Trigger Avatar speech with clean text (tags removed)
-                    // 如果是图片生成指令，只朗读提示部分
-                    val speakText = if (imageGenCommand != null) {
-                        "好的，我来为你生成一张图片，请稍等..."
-                    } else {
-                        parsed.text
-                    }
-                    // 日志降噪：减少 Avatar speech 触发日志
-                    avatarService.speak(speakText)
-                    
+
                     // 落库 assistant message（UI 通过 observeMessages 自动更新，不再手动 append）
                     try {
                         chatRepository.appendMessage(
@@ -857,7 +753,6 @@ class ChatViewModel @Inject constructor(
                 } catch (e: Exception) {
                     Log.e(TAG, "Failed to persist image gen prompt message", e)
                 }
-                avatarService.speak("我可以为你生成图片，需要确认一下吗？")
                 return@launch
             }
             
@@ -870,12 +765,9 @@ class ChatViewModel @Inject constructor(
                     warning = null
                 )
             }
-            
+
             try {
-                // 3. Trigger thinking state
-                avatarService.startThinking()
-                
-                // 4. 读取 RAG 配置
+                // 3. 读取 RAG 配置
                 val ragConfig = userPreferencesRepository.getRagConfig()
                 
                 // ========== 并发优化：同时执行 RAG 和 history 获取 ==========
@@ -1060,31 +952,7 @@ class ChatViewModel @Inject constructor(
                         Log.d(TAG, "Detected image generation command: ${imageGenCommand.prompt.take(50)}...")
                         _pendingImageGen.value = imageGenCommand
                     }
-                    
-                    // Drive avatar
-                    avatarService.setEmotion(parsed.emotion)
-                    avatarService.playGesture(parsed.gesture)
-                    
-                    // Trigger Avatar speech
-                    val speakText = if (imageGenCommand != null) {
-                        "好的，我来为你生成一张图片，请稍等..."
-                    } else {
-                        parsed.text
-                    }
-                    // 日志降噪：减少 Avatar speech 触发日志
-                    
-                    // 根据配置选择是否使用快速思考（默认启用，失败时降级）
-                    if (userPreferencesRepository.isFastThinkingEnabled()) {
-                        try {
-                            avatarService.speakWithoutDelay(speakText)
-                        } catch (e: Exception) {
-                            // 降级处理（静默）
-                            avatarService.speak(speakText)
-                        }
-                    } else {
-                        avatarService.speak(speakText)
-                    }
-                    
+
                     // 落库 assistant message
                     try {
                         chatRepository.appendMessage(
@@ -1197,7 +1065,7 @@ class ChatViewModel @Inject constructor(
             }
             
             try {
-                avatarService.startThinking()
+                // Avatar service removed - no longer calling startThinking()
                 
                 // 3. 处理图片：本地 URI 转 base64，公网 URL 直接使用
                 val imageUrlForModel: String? = if (isLocalUri) {
@@ -1317,9 +1185,7 @@ class ChatViewModel @Inject constructor(
                 val finalResponse = _chatState.value.currentStreamToken
                 if (finalResponse.isNotBlank()) {
                     val parsed = EmotionGestureParser.parse(finalResponse)
-                    avatarService.setEmotion(parsed.emotion)
-                    avatarService.playGesture(parsed.gesture)
-                    avatarService.speak(parsed.text)
+                    // Avatar service removed - no longer calling avatarService
                     
                     try {
                         chatRepository.appendMessage(
@@ -1421,7 +1287,7 @@ class ChatViewModel @Inject constructor(
             }
             
             try {
-                avatarService.startThinking()
+                // Avatar service removed - no longer calling startThinking()
                 
                 // 3. 抽取视频帧
                 val uri = Uri.parse(videoUri)
@@ -1533,9 +1399,7 @@ class ChatViewModel @Inject constructor(
                 val finalResponse = _chatState.value.currentStreamToken
                 if (finalResponse.isNotBlank()) {
                     val parsed = EmotionGestureParser.parse(finalResponse)
-                    avatarService.setEmotion(parsed.emotion)
-                    avatarService.playGesture(parsed.gesture)
-                    avatarService.speak(parsed.text)
+                    // Avatar service removed - no longer calling avatarService
                     
                     try {
                         chatRepository.appendMessage(
@@ -1996,9 +1860,6 @@ class ChatViewModel @Inject constructor(
                     content = "已为你生成图片",
                     imageUrl = imageUrl
                 )
-                
-                // 通知用户
-                avatarService.speak("图片已经生成好了，你觉得怎么样？")
                 
             } catch (e: ImageGenException) {
                 Log.e(TAG, "Image generation failed", e)

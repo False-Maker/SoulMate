@@ -170,7 +170,7 @@ fun MemoryGardenScreen(
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = "✨ 铭刻记忆",
+                            text = "�?铭刻记忆",
                             style = MaterialTheme.typography.headlineSmall,
                             color = Color.White,
                             fontWeight = FontWeight.Bold
@@ -180,7 +180,7 @@ fun MemoryGardenScreen(
                         TextField(
                             value = newMemoryText,
                             onValueChange = { newMemoryText = it },
-                            placeholder = { Text("记录当下的感动...", color = Color.Gray) },
+                            placeholder = { Text("记录当下的感�?..", color = Color.Gray) },
                             colors = TextFieldDefaults.colors(
                                 focusedContainerColor = Color.White.copy(alpha = 0.05f),
                                 unfocusedContainerColor = Color.White.copy(alpha = 0.05f),

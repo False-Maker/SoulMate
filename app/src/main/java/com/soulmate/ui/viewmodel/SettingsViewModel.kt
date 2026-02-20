@@ -28,8 +28,7 @@ class SettingsViewModel @Inject constructor(
     private val affinityRepository: AffinityRepository,
     private val mindWatchService: com.soulmate.data.service.MindWatchService,
     private val anniversaryManager: com.soulmate.worker.AnniversaryManager,
-    private val memoryRepository: com.soulmate.core.data.memory.MemoryRepository,
-    private val avatarCoreService: com.soulmate.data.service.AvatarCoreService
+    private val memoryRepository: com.soulmate.core.data.memory.MemoryRepository
 ) : ViewModel() {
     
     /**
@@ -139,18 +138,6 @@ class SettingsViewModel @Inject constructor(
      */
     fun resetScore() {
         intimacyManager.resetScore()
-    }
-    
-    /**
-     * 清除数字人缓存
-     * 
-     * 用于解决数字人更新后（如从全身改为半身）缓存未更新的问题。
-     * 清除缓存后，下次加载数字人时会重新从服务器下载最新资源。
-     * 
-     * @return true 如果清除成功，false 如果清除失败
-     */
-    fun clearAvatarCache(): Boolean {
-        return avatarCoreService.clearAvatarCache()
     }
 
     /**

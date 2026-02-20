@@ -12,7 +12,7 @@ data class ParsedResult(
 object UIWidgetParser {
     private val gson = Gson()
     private val widgetPattern = Regex(
-        """\{[\s\S]*?"widget"\s*:\s*".+?"[\s\S]*?}""",
+        """\{\s*"widget"\s*:\s*".+?"\s*\}""",
         setOf(RegexOption.DOT_MATCHES_ALL)
     )
 
@@ -62,7 +62,7 @@ object UIWidgetParser {
             val root = gson.fromJson(jsonStr, JsonObject::class.java) ?: return null
             val widgetType = root.get("widget")?.asString?.lowercase() ?: return null
             val data = root.getAsJsonObject("data") ?: return null
-            when (widgetType) {
+             when (widgetType) {
                 "memory_capsule" -> parseMemoryCapsule(data)
                 "decision_options" -> parseDecisionOptions(data)
                 "breathing_guide" -> parseBreathingGuide(data)
